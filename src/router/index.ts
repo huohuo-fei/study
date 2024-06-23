@@ -4,6 +4,12 @@ const routes = [
   {
     path:'/',
     component:() => import('../examples/HelloWorld.vue')
+  },{
+    path:'/test-matrix',
+    component:() => import('../examples/MatrixOfCanvas.vue')
+  },{
+    path:'/test-camera',
+    component:() => import('../examples/Camera.vue')
   }
 ]
 
