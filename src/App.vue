@@ -21,6 +21,7 @@ onMounted(() => {
     <router-link to="/">Hello world</router-link>
     <router-link to="/test-matrix">矩阵测试</router-link>
     <router-link to="/test-camera">相机测试</router-link>
+    <router-link to="/test-Img">Img测试</router-link>
   </nav>
 
 </template>

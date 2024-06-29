@@ -1,5 +1,8 @@
 # canvas 2d 项目
 - 尝试threeJS里的矩阵 乘法  和 Matrix().rotate().scale()的执行顺序
+- s.mutiply(r).mutiply(t) => Matrix().t().r().s()  这两个返回的矩阵一样吗
+- 看math工具类里面  mutiply() 和 Matrix().r().s() 的源代码，检测乘法的顺序 -- 也就是文章里面说的 绝对变换和相对变换
+- a.multiply(b)  => a*b 
 
 ### 一些项目问题：
 * 裁剪空间系中 为何要对 坐标系进行变换，让原点在中心？

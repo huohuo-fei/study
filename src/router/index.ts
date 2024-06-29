@@ -10,6 +10,9 @@ const routes = [
   },{
     path:'/test-camera',
     component:() => import('../examples/Camera.vue')
+  },{
+    path:'/test-img',
+    component:() => import('../examples/Img.vue')
   }
 ]
 
