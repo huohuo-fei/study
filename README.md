@@ -14,6 +14,8 @@ canvastoClip({ x, y }: Vector2) {
     return new Vector2(x - width / 2, y - height / 2)
 }
 ```
+- group 里面不能有Img对象吗:可以，group的children是Object2D类型。Img继承子Object2D,
+- canvas 中的裁剪坐标系 还是不太明白 -- 裁剪坐标，就是在canvas坐标的基础上，将相机加了进去。相机默认的位置或者说看向的就是画布的中点，这个是规定，所以需要将画布的原点变为中点
 
 ### 一些前端问题
 * vue 的router-view 标签  可以传属性，是直接传入到组件的props里面吗？

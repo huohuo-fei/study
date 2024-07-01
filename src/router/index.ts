@@ -13,6 +13,12 @@ const routes = [
   },{
     path:'/test-img',
     component:() => import('../examples/Img.vue')
+  },{
+    path:'/test-group',
+    component:() => import('../examples/Group.vue')
+  },{
+    path:'/test-scene',
+    component:() => import('../examples/Scene.vue')
   }
 ]
 

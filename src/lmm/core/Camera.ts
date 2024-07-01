@@ -5,6 +5,7 @@ export class Camera {
   zoom: number;
 
   constructor(x: number = 0, y: number = 0, zoom: number = 1) {
+    // 相机默认在 0,0 这个是画布中心点
     this.position = new Vector2(x, y);
     this.zoom = zoom;
   }

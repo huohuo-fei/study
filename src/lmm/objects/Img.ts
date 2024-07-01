@@ -83,7 +83,7 @@ export class Img extends Object2D {
   }
 
   // 绘图
-  drawShape(ctx: CanvasRenderingContext2D) {
+  protected  drawShape(ctx: CanvasRenderingContext2D) {
     const { image, offset, size, view, style } = this;
 
     // 先应用样式
@@ -111,8 +111,6 @@ export class Img extends Object2D {
     const {
       size: { x: imgW, y: imgH },
     } = this;
-    console.log(matrix,'matrix');
-    
     //  [0, 0, imgW, 0, imgW, imgH, 0, imgH] 边界的四个顶点坐标
     crtPathByMatrix(ctx, [0, 0, imgW, 0, imgW, imgH, 0, imgH], matrix);
   }

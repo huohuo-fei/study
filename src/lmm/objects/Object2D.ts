@@ -44,6 +44,7 @@ export class Object2D extends EventDispatcher{
       enableCamera = true
       // UUID
       uuid = generateUUID()
+      
   
       // 类型
       readonly isObject2D = true
@@ -136,7 +137,7 @@ export class Object2D extends EventDispatcher{
        */
       getScene():Scene|null{
         if('isScene' in this){
-          return this 
+          return (this as unknown as Scene) 
         }else if(this.parent){
           return this.parent.getScene()
         }else{
@@ -144,7 +145,7 @@ export class Object2D extends EventDispatcher{
         }
       }
 
-      draw(ctx:CanvasRenderingContext2D){
+     draw(ctx:CanvasRenderingContext2D){
         if(!this.visible) return
 
         ctx.save()
@@ -156,8 +157,8 @@ export class Object2D extends EventDispatcher{
       }
 
       // 绘制图形的接口  
-      drawShape(ctx:CanvasRenderingContext2D){}
+      protected  drawShape(ctx:CanvasRenderingContext2D){}
 
       // 创建路径接口
-      crtPath(ctx:CanvasRenderingContext2D,projectionMatrix:Matrix3){}
+       crtPath(ctx:CanvasRenderingContext2D,projectionMatrix:Matrix3){}
 }
