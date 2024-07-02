@@ -21,9 +21,10 @@ onMounted(() => {
     <router-link to="/">Hello world</router-link>
     <router-link to="/test-matrix">矩阵测试</router-link>
     <router-link to="/test-camera">相机测试</router-link>
-    <router-link to="/test-Img">Img测试</router-link>
-    <router-link to="/test-Group">Group测试</router-link>
-    <router-link to="/test-Scene">Scene</router-link>
+    <router-link to="/test-img">Img测试</router-link>
+    <router-link to="/test-group">Group测试</router-link>
+    <router-link to="/test-scene">Scene</router-link>
+    <router-link to="/test-controler">轨道控制器</router-link>
   </nav>
 
 </template>

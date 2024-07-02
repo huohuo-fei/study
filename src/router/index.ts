@@ -19,6 +19,10 @@ const routes = [
   },{
     path:'/test-scene',
     component:() => import('../examples/Scene.vue')
+  },
+  {
+    path:'/test-controler',
+    component:() => import('../examples/OrbitControler.vue')
   }
 ]
 

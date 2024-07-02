@@ -3,7 +3,7 @@
 // 自定义事件类型
 export type CustomEvent = {
   type: string; // 对象的某个状态
-  target: any; // 目标对象
+  target?: any; // 目标对象
   [attachment: string]: any; // 自定义参数
 };
 
