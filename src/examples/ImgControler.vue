@@ -22,6 +22,9 @@ const scene = new Scene();
 const group = new Group();
 const orbi = new OrbitControler(scene.camera, {});
 const imgContr = new ImgControler();
+// 鼠标样式
+const cursor = ref('default');
+let imgHover: Img | null = null;
 
 const images: HTMLImageElement[] = [];
 for (let i = 1; i < 5; i++) {
@@ -75,12 +78,18 @@ const enableControl = () => {
       orbi.pointerdown(event.clientX, event.clientY);
     } else if (event.button === 0) {
       const mp = scene.canvasToClip(new Vector2(event.clientX, event.clientY));
-      imgContr.pointerdown(selectObj(group.children, mp), mp);
+
+      imgHover = selectObj(group.children, mp);
+      imgContr.pointerdown(imgHover, mp);
+      updateMouseStyle();
     }
   });
 
   canvasRef.value?.addEventListener('pointermove', ({ clientX, clientY }) => {
     orbi.pointermove(clientX, clientY);
+    const clipMp = scene.clientToClip(clientX, clientY);
+    imgContr.pointermove(clipMp);
+    updateMouseStyle();
   });
 
   canvasRef.value?.addEventListener('pointerup', () => {
@@ -139,6 +148,16 @@ const selectObj = (imgGroup: Object2D[], mp: Vector2): Img | null => {
   return null;
 };
 
+const updateMouseStyle = () => {
+  if (imgContr.mouseState) {
+    cursor.value = 'none';
+  } else if (imgHover) {
+    cursor.value = 'pointer';
+  } else {
+    cursor.value = 'default';
+  }
+};
+
 onMounted(() => {
   // 绘制
   const canvas = canvasRef.value;
@@ -154,7 +173,12 @@ onMounted(() => {
 </script>
 
 <template>
-  <canvas ref="canvasRef" :width="size.width" :height="size.height"></canvas>
+  <canvas
+    ref="canvasRef"
+    :style="{ cursor: cursor }"
+    :width="size.width"
+    :height="size.height"
+  ></canvas>
 </template>
 
 <style scoped>
