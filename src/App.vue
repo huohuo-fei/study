@@ -25,6 +25,7 @@ onMounted(() => {
     <router-link to="/test-group">Group测试</router-link>
     <router-link to="/test-scene">Scene</router-link>
     <router-link to="/test-controler">轨道控制器</router-link>
+    <router-link to="/test-imgcontroler">图案控制器</router-link>
   </nav>
 
 </template>

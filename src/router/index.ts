@@ -23,7 +23,11 @@ const routes = [
   {
     path:'/test-controler',
     component:() => import('../examples/OrbitControler.vue')
-  }
+  },
+  {
+    path:'/test-imgcontroler',
+    component:() => import('../examples/ImgControler.vue')
+  } // ImgControler
 ]
 
 const router = createRouter({

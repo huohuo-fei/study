@@ -96,6 +96,9 @@ export class Scene extends Group {
     const { ctx } = this
     ctx.beginPath()
     obj.crtPath(ctx,matrix)
+    ctx.stroke()
+    // ctx.fillRect(0,0,100,100)
+    
     
     return ctx.isPointInPath(mp.x,mp.y)
   }
