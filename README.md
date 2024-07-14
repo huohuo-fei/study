@@ -19,6 +19,9 @@ canvastoClip({ x, y }: Vector2) {
 - TODO:优化轨道控制器，对事件监听的代码在内部实现。
 - 如何在矩阵中提取对应的参数  - 缩放 旋转 
 - 图案控制框的 moMatrix 可以测试下
+- TODO:针对旋转，实现对角为基点的旋转  按下 alt触发
+- 为什么使用vue 搭建的canvas 不能再debugger下看到ctx.fill()的绘制结果？
+- 为什么在变换中，鼠标的坐标需要下沉到图案的父级坐标系中？
 
 ### 一些前端问题
 * vue 的router-view 标签  可以传属性，是直接传入到组件的props里面吗？

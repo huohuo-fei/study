@@ -92,13 +92,34 @@ const enableControl = () => {
     updateMouseStyle();
   });
 
-  canvasRef.value?.addEventListener('pointerup', () => {
-    orbi.pointerup();
+  canvasRef.value?.addEventListener('pointerup', ({ button }) => {
+    switch (button) {
+      case 1:
+        orbi.pointerup();
+        break;
+      case 0 :
+        imgContr.pointerup()
+    }
   });
 
   canvasRef.value?.addEventListener('wheel', ({ deltaY }) => {
     orbi.doScale(deltaY);
   });
+
+  /* 键盘按下 */
+window.addEventListener(
+    'keydown',
+    ({ key, altKey, shiftKey }: KeyboardEvent) => {
+        imgContr.keydown(key, altKey, shiftKey)
+        updateMouseStyle()
+    }
+)
+
+/* 键盘抬起 */
+window.addEventListener('keyup', ({ altKey, shiftKey }: KeyboardEvent) => {
+    imgContr.keyup(altKey, shiftKey)
+})
+
 
   // 按需渲染
   orbi.addEventListener('change', (event) => {

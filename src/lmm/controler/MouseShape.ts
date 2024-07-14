@@ -67,7 +67,6 @@ export class MouseShape {
     const scaleRotate = new Vector2()
       .subVectors(center, new Vector2(vertices[6], vertices[7]))
       .angle();
-      console.log(vertices,'vertices');
       
     this.drawScale(ctx, scaleRotate);
   }

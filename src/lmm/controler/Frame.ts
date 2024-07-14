@@ -36,6 +36,9 @@ export class Frame {
   /** 图案中点 */
   center = new Vector2();
 
+  /** 缩放 旋转的对面节点 */
+  opposite = new Vector2()
+
   /** 路径变换矩阵 */
   matrix = new Matrix3();
 
@@ -226,6 +229,9 @@ export class Frame {
     for (let i = 0, len = fv.length; i < len; i += 4) {
       const distance = new Vector2(fv[i], fv[i + 1]).sub(mp).length();
       if (distance <= scaleDist) {
+        // 对面节点的 x 索引
+        const ind = (i + 8) % 16
+        this.opposite.set(fv[ind],fv[ind+1])
         return 'scale';
       }
     }
@@ -248,6 +254,10 @@ export class Frame {
     ctx.lineWidth = 80
     ctx.beginPath()
     crtPath(ctx,fv,true)
+    console.log('test');
+    
+    ctx.fillStyle = 'red'
+    ctx.fillRect(-200,-200,1000,1000)
     _bool = ctx.isPointInStroke(mp.x,mp.y)
     ctx.restore()
     if(_bool){
@@ -261,15 +271,19 @@ export class Frame {
     const { vertices: fv } = this;
     // x y轴的线的顶点
     const lines = [
-      [fv[0], fv[1], fv[12], fv[13]],
-      [fv[4], fv[5], fv[8], fv[9]],
-      [fv[0], fv[1], fv[4], fv[5]],
-      [fv[8], fv[9], fv[12], fv[13]],
+      [fv[0], fv[1], fv[12], fv[13]], // 6
+      [fv[4], fv[5], fv[8], fv[9]],   // 14
+      [fv[0], fv[1], fv[4], fv[5]],   // 10
+      [fv[8], fv[9], fv[12], fv[13]], // 2
     ];
+
+    // 每条边的对面节点坐标 起始坐标
+    const opposites = [6,14,10,2]
     for (let i = 0; i < 4; i++) {
       const stateType = i < 2 ? 'scaleX' : 'scaleY';
       const state = this.simpleScale(scaleDist, mp, lines[i], stateType);
       if (state) {
+        this.opposite.set(fv[opposites[i]],fv[opposites[i] + 1])
         return state;
       }
     }

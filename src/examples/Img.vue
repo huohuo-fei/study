@@ -25,8 +25,8 @@ function render(ctx:CanvasRenderingContext2D) {
   // 设置属性
   pattern.setOption({
     // 模型矩阵相关
-    position: new Vector2(0, 50),
-    rotate: 0.4,
+    position: new Vector2(0, 0),
+    rotate: 0,
     scale: new Vector2(0.5),
 
     // Img 属性
@@ -41,12 +41,12 @@ function render(ctx:CanvasRenderingContext2D) {
     // 这个裁剪范围尺寸，是基于drawImage的sourceImage,也就是第一个参数源的尺寸大小。
     // pattern 的drawImage是image,所以再裁剪的时候，是按照image的尺寸做参考的
     // 用来提取图片的哪些内容会被显示
-    view: {
-      x: 0,
-      y: 0,
-      width: image.width/2,
-      height: image.height/2,
-    },
+    // view: {
+    //   x: 0,
+    //   y: 0,
+    //   width: image.width/2,
+    //   height: image.height/2,
+    // },
 
     // 样式
     style: {
