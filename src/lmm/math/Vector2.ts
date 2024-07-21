@@ -263,6 +263,10 @@ class Vector2 {
         // computes the angle in radians with respect to the positive x-axis
 
         const angle = Math.atan2(-this.y, -this.x) + Math.PI
+        // let angle = Math.atan2(this.y, this.x) + Math.PI
+        // if(angle<=0){
+        //   angle += Math.PI *2
+        // }
 
         return angle
     }

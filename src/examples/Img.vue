@@ -27,7 +27,7 @@ function render(ctx:CanvasRenderingContext2D) {
     // 模型矩阵相关
     position: new Vector2(0, 0),
     rotate: 0,
-    scale: new Vector2(0.5),
+    scale: new Vector2(0.8),
 
     // Img 属性
     // 负责设置绘制到canvas上的大小 以及偏移
@@ -35,7 +35,7 @@ function render(ctx:CanvasRenderingContext2D) {
     // size 负责在画布上绘制的内容占据的大小，这里只是让最终显示的大小是 image 的一半 仅此而已，它和image没有任何关系
     // offset 是偏移的值，这里设置为size的负一半，就是想让中心点和canvas原点对齐
     size: imgSize.clone(),
-    offset: imgSize.clone().multiplyScalar(-0.5),
+    // offset: imgSize.clone().multiplyScalar(-0.5),
 
     // view 设置裁剪范围
     // 这个裁剪范围尺寸，是基于drawImage的sourceImage,也就是第一个参数源的尺寸大小。

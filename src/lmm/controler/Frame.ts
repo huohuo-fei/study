@@ -254,7 +254,6 @@ export class Frame {
     ctx.lineWidth = 80
     ctx.beginPath()
     crtPath(ctx,fv,true)
-    console.log('test');
     
     ctx.fillStyle = 'red'
     ctx.fillRect(-200,-200,1000,1000)

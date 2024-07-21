@@ -27,6 +27,10 @@ const routes = [
   {
     path:'/test-imgcontroler',
     component:() => import('../examples/ImgControler.vue')
+  },
+  {
+    path:'/test-origin',
+    component:() => import('../examples/OriginChange.vue')
   } // ImgControler
 ]
 

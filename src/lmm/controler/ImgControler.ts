@@ -272,6 +272,8 @@ export class ImgControler extends Object2D {
     clipOpposite.copy(frame.opposite);
     // 父级mvp 逆矩阵
     parent && parentPvmInvert.copy(parent.pvmMatrix.invert());
+    console.log(parent?.pvmMatrix,img.parent,'omg~~~');
+    
 
     // 将图案位置信息 和鼠标位置信息  更新到imgTransformer 中
     imgTransformer.setOption({
