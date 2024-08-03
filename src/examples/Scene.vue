@@ -36,7 +36,7 @@ function test(canvas: HTMLCanvasElement) {
 
     // Img 属性
     size: imgSize.clone(),
-    offset: imgSize.clone().multiplyScalar(-0.5),
+    // offset: imgSize.clone().multiplyScalar(-0.5),
 
     // 样式
     style: {
@@ -48,12 +48,17 @@ function test(canvas: HTMLCanvasElement) {
   });
 
   // 相机位移测试
-  scene.camera.position.set(50, 100);
+  scene.camera.position.set(50,100);
 
   // 记录鼠标的裁剪坐标
-  canvas.addEventListener('pointermove', ({ clientX, clientY }) => {
+  canvas.addEventListener('pointerdown', ({ clientX, clientY }) => {
     const newPos = scene.clientToClip(clientX, clientY)
-    mouseClipPos.copy(newPos);
+    // mouseClipPos.copy(newPos);
+    console.log(newPos,'newPos');
+    console.log(new Vector2(0,507).applyMatrix3(pattern.worldMatrix),'newPos');
+    console.log(new Vector2(0,507).applyMatrix3(pattern.pvmMatrix));
+    
+    
   });
 
   // 动画
@@ -83,7 +88,9 @@ function ani(time = 0) {
   pattern.crtPath(scene.ctx);
   scene.ctx.stroke();
   scene.ctx.restore();
-  requestAnimationFrame(ani);
+  // requestAnimationFrame(ani);
+  console.log(pattern);
+  
 }
 
 onMounted(() => {

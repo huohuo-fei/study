@@ -31,7 +31,11 @@ const routes = [
   {
     path:'/test-origin',
     component:() => import('../examples/OriginChange.vue')
-  } // ImgControler
+  }, 
+  {
+    path:'/test-transform',
+    component:() => import('../examples/TransformControler.vue')
+  } 
 ]
 
 const router = createRouter({
