@@ -16,7 +16,7 @@ export class Object2DTransformer {
   /** 相对量变换 */
   relativePosition = new Vector2();
   relativeRotate = 0;
-  relativeScale = new Vector2();
+  relativeScale = new Vector2(1);
 
   /** 等量旋转弧度 */
   uniformRotateAng = pi2 / 24;

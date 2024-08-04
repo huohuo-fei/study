@@ -10,7 +10,7 @@ import { Group } from '../lmmPlus/objects/Group';
 import { Object2DType } from '../lmmPlus/objects/Object2D';
 import { Object2D } from '../lmmPlus/objects/Object2D';
 import { Matrix3 } from '../lmmPlus/math/Matrix3';
-import { TransformControler } from '../lmmPlus/controler/ImgControler';
+import { TransformControler } from '../lmmPlus/controler/TransformControler'; 
 const props = defineProps({
   size: {
     type: Object,
@@ -79,8 +79,6 @@ orbi.addEventListener('change',() =>{
 })
 
 transformControler.addEventListener('change',() =>{
-  console.log('trans');
-  
   scene.render()
 })
 
@@ -93,9 +91,6 @@ const enableControl = () => {
       const mp = scene.clientToClip(event.clientX,event.clientY);
 
       imgHover = selectObj(group.children, mp);
-      console.log(imgHover,'imgHover');
-      
-      
       transformControler.pointerdown(imgHover, mp);
       updateMouseStyle();
     }
@@ -106,7 +101,6 @@ const enableControl = () => {
     const clipMp = scene.clientToClip(clientX, clientY);
     transformControler.pointermove(clipMp)
     imgHover = selectObj(group.children, clipMp);
-    // console.log(imgHover,'imgHover');
     
     updateMouseStyle();
   });
@@ -151,7 +145,6 @@ const imgControlDown = (cx: number, cy: number) => {
     const clip = scene.clientToClip(cx, cy);
     const isIn = scene.isPointInObj(obj, clip, obj.pvmoMatrix);
     if (isIn) {
-      console.log(obj.name, clip, 'is in');
       break;
     }
   }
@@ -160,11 +153,9 @@ const imgControlDown = (cx: number, cy: number) => {
 // 测试从矩阵中获取旋转分量
 const testMatrix = () => {
   const rm = new Matrix3().makeRotation(30);
-  // console.log(rm);
   const { elements: e } = rm;
   const x = new Vector2(e[0], e[1]).length();
   const y = new Vector2(e[3], e[4]).length();
-  console.log(x, y);
 };
 testMatrix();
 
@@ -218,3 +209,4 @@ onMounted(() => {
   color: #888;
 }
 </style>
+../lmmPlus/controler/TransformControler

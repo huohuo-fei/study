@@ -2,7 +2,7 @@ import { Vector2 } from '../math/Vector2';
 import { Matrix3 } from '../math/Matrix3';
 import { Scene } from '../core/Scene';
 import { MouseShape } from './MouseShape';
-import { Object2DTransformer } from './ImgTransformer';
+import { Object2DTransformer } from './Object2DTransformer';
 import { Object2D } from '../objects/Object2D';
 import { ControlFrame, State } from './Frame';
 
@@ -15,6 +15,12 @@ type TransformData = {
   scale: Vector2;
 };
 
+/**
+ * 变换控制器 统领所有的变换:
+ * 2D对象变换  Object2DTransformer
+ * 包围盒变换  ControlFrame
+ * 鼠标变换    MouseShape
+ */
 export class TransformControler extends Object2D {
   /** 要控制的obj */
   _obj: Object2D | null = null;
@@ -63,7 +69,7 @@ export class TransformControler extends Object2D {
   /** 变换器 */
   transformer = new Object2DTransformer();
 
-  // 父级pvm 逆矩阵
+  // 父级pvm 逆矩阵  -- TODO:直接考虑塌陷到图案的
   parentPvmInvert = new Matrix3();
 
   // 选中图案时暂存的数据 用于取消变换
@@ -158,6 +164,7 @@ export class TransformControler extends Object2D {
     if (this.controlState) {
       this.dragEnd.copy(mp.clone().applyMatrix3(this.parentPvmInvert));
       this.end2Origin.subVectors(this.dragEnd, this.transformer.localPosition);
+      this.relativeTransform(this.controlState)
     } else {
       // 获取鼠标状态
       this.mouseState = this.frame.getMouseState(mp);
@@ -210,7 +217,7 @@ export class TransformControler extends Object2D {
 
   /** 相对变换 */
   relativeTransform(controlState: string) {
-    const { transformer, start2Origin, dragStart, dragEnd, end2Orign, obj } =
+    const { transformer, start2Origin, dragStart, dragEnd, end2Origin, obj } =
       this;
     const key = controlState + Number(this.shiftKey);
     if (!obj || !transformer[key]) {
@@ -219,7 +226,7 @@ export class TransformControler extends Object2D {
     if (controlState === 'move') {
       transformer[key](dragStart, dragEnd);
     } else {
-      transformer[key](start2Origin, end2Orign);
+      transformer[key](start2Origin, end2Origin);
     }
     this.dispatchEvent({ type: 'transformed', obj });
   }
