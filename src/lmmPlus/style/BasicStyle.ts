@@ -15,6 +15,7 @@ export type BasicStyleType = {
   clip?: boolean;
 };
 
+/** 基础样式 主要包含共有的投影 合成 裁剪 */
 export class BasicStyle {
   // 投影相关
   shadowColor: string | undefined;

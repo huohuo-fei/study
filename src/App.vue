@@ -28,6 +28,7 @@ onMounted(() => {
     <router-link to="/test-imgcontroler">图案控制器</router-link>
     <router-link to="/test-origin">基点变换</router-link>
     <router-link to="/test-transform">变换</router-link>
+    <router-link to="/test-text2D">文字</router-link>
   </nav>
 
 </template>

@@ -262,6 +262,9 @@ export class TransformControler extends Object2D {
     obj1.scale.copy(scale);
     obj1.rotate = rotate;
   }
+  updateFrame() {
+    this.obj?.computeBoundingBox()
+}
 
   draw(ctx: CanvasRenderingContext2D) {
     const { obj } = this;

@@ -49,7 +49,6 @@ export class Scene extends Group {
       children,
       autoClear,
     } = this;
-
     ctx.save();
     // 清理画布 这是在没有移动画布中心点的情况下,所以当前清理的也就是整个屏幕的像素范围
     autoClear && ctx.clearRect(0, 0, width, height);
@@ -96,10 +95,6 @@ export class Scene extends Group {
     const { ctx } = this
     ctx.beginPath()
     obj.crtPath(ctx,matrix)
-    ctx.stroke()
-    // ctx.fillRect(0,0,100,100)
-    
-    
     return ctx.isPointInPath(mp.x,mp.y)
   }
 }

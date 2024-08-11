@@ -1,16 +1,17 @@
 <script setup lang="ts">
-import { ref, defineProps, onMounted, withCtx } from 'vue';
+import { ref, defineProps, onMounted } from 'vue';
 import { Camera } from '../lmmPlus/core/Camera';
 import { Img2D } from '../lmmPlus/objects/Img';
 import { Vector2 } from '../lmmPlus/math/Vector2';
 import { Scene } from '../lmmPlus/core/Scene';
 import { OrbitControler } from '../lmmPlus/controler/OrbitControler';
-import { imgLoadPromises,SelectObj } from '../lmmPlus/objects/ObjectUtils';
+import { imgLoadPromises, SelectObj } from '../lmmPlus/objects/ObjectUtils';
 import { Group } from '../lmmPlus/objects/Group';
 import { Object2DType } from '../lmmPlus/objects/Object2D';
 import { Object2D } from '../lmmPlus/objects/Object2D';
 import { Matrix3 } from '../lmmPlus/math/Matrix3';
-import { TransformControler } from '../lmmPlus/controler/TransformControler'; 
+import { TransformControler } from '../lmmPlus/controler/TransformControler';
+import { Text2D } from '../lmmPlus/objects/Text2D';
 const props = defineProps({
   size: {
     type: Object,
@@ -21,12 +22,12 @@ const canvasRef = ref<HTMLCanvasElement>();
 const scene = new Scene();
 const group = new Group();
 const orbi = new OrbitControler(scene.camera, {});
-scene.add(group)
-const selectObj = SelectObj(scene)
+scene.add(group);
+const selectObj = SelectObj(scene);
 
 /** 图案控制器 */
-const transformControler = new TransformControler()
-scene.add(transformControler)
+const transformControler = new TransformControler();
+scene.add(transformControler);
 // 鼠标样式
 const cursor = ref('default');
 
@@ -36,7 +37,7 @@ let imgHover: Object2D | null = null;
 // 选择图案的方法
 
 const images: HTMLImageElement[] = [];
-for (let i = 1; i < 5; i++) {
+for (let i = 1; i < 2; i++) {
   const image = new Image();
   image.src = `https://yxyy-pandora.oss-cn-beijing.aliyuncs.com/stamp-images/${i}.png`;
   images.push(image);
@@ -47,13 +48,15 @@ function test() {
   // 先将所有图形 放到一个group
 
   for (let i = 0, len = images.length; i < len; i++) {
-    const size = new Vector2(images[i].width,images[i].height).multiplyScalar(0.3)
+    const size = new Vector2(images[i].width, images[i].height).multiplyScalar(
+      0.3
+    );
     const img = new Img2D({
       image: images[i],
       // 模型矩阵
-      position: new Vector2(0, i * 150-250),
+      position: new Vector2(0, i * 150 - 250),
       rotate: 0.3,
-      offset:new Vector2(-size.x / 2,-size.y/2),
+      offset: new Vector2(-size.x / 2, -size.y / 2),
       name: 'img' + i,
       size,
       // 样式
@@ -74,13 +77,13 @@ function test() {
 }
 
 // 按需渲染
-orbi.addEventListener('change',() =>{
-  scene.render()
-})
+orbi.addEventListener('change', () => {
+  scene.render();
+});
 
-transformControler.addEventListener('change',() =>{
-  scene.render()
-})
+transformControler.addEventListener('change', () => {
+  scene.render();
+});
 
 // 轨道控制器
 const enableControl = () => {
@@ -88,7 +91,7 @@ const enableControl = () => {
     if (event.button === 1) {
       orbi.pointerdown(event.clientX, event.clientY);
     } else if (event.button === 0) {
-      const mp = scene.clientToClip(event.clientX,event.clientY);
+      const mp = scene.clientToClip(event.clientX, event.clientY);
 
       imgHover = selectObj(group.children, mp);
       transformControler.pointerdown(imgHover, mp);
@@ -99,20 +102,19 @@ const enableControl = () => {
   canvasRef.value?.addEventListener('pointermove', ({ clientX, clientY }) => {
     orbi.pointermove(clientX, clientY);
     const clipMp = scene.clientToClip(clientX, clientY);
-    transformControler.pointermove(clipMp)
+    transformControler.pointermove(clipMp);
     imgHover = selectObj(group.children, clipMp);
-    
+
     updateMouseStyle();
   });
 
   canvasRef.value?.addEventListener('pointerup', ({ button }) => {
     switch (button) {
       case 1:
-
         orbi.pointerup();
         break;
-      case 0 :
-        transformControler.pointerup()
+      case 0:
+        transformControler.pointerup();
     }
   });
 
@@ -121,18 +123,18 @@ const enableControl = () => {
   });
 
   /* 键盘按下 */
-window.addEventListener(
+  window.addEventListener(
     'keydown',
     ({ key, altKey, shiftKey }: KeyboardEvent) => {
-        transformControler.keydown(key, altKey, shiftKey)
-        updateMouseStyle()
+      transformControler.keydown(key, altKey, shiftKey);
+      updateMouseStyle();
     }
-)
+  );
 
-/* 键盘抬起 */
-window.addEventListener('keyup', ({ altKey, shiftKey }: KeyboardEvent) => {
-    transformControler.keyup(altKey, shiftKey)
-})
+  /* 键盘抬起 */
+  window.addEventListener('keyup', ({ altKey, shiftKey }: KeyboardEvent) => {
+    transformControler.keyup(altKey, shiftKey);
+  });
 };
 
 // 鼠标按下　是否选中图形
@@ -159,18 +161,6 @@ const testMatrix = () => {
 };
 testMatrix();
 
-/** 选择图案 */
-// const selectObj = (imgGroup: Object2D[], mp: Vector2): Img2D | null => {
-//   for (let img of [...imgGroup].reverse()) {
-//     // 这里使用倒叙
-//     if (img instanceof Img2D && scene.isPointInObj(img, mp, img.pvmMatrix)) {
-//       return img;
-//     }
-//   }
-//   return null;
-// };
-
-
 const updateMouseStyle = () => {
   if (transformControler.mouseState) {
     cursor.value = 'none';
@@ -181,6 +171,19 @@ const updateMouseStyle = () => {
   }
 };
 
+const msg = ref('Sphix');
+const text2D = new Text2D({
+  text: msg.value,
+  maxWidth: 400,
+  position: new Vector2(0, 0),
+  style: {
+    fontSize: 100,
+    fillStyle: '#00acec',
+    textAlign: 'start',
+    textBaseLine: 'top',
+  },
+});
+group.add(text2D);
 onMounted(() => {
   // 绘制
   const canvas = canvasRef.value;
@@ -193,6 +196,11 @@ onMounted(() => {
     });
   }
 });
+const textChange = () => {
+  text2D.text = msg.value
+    transformControler.updateFrame()
+    scene.render()
+};
 </script>
 
 <template>
@@ -202,11 +210,21 @@ onMounted(() => {
     :width="size.width"
     :height="size.height"
   ></canvas>
+  <div id="text">
+    <label>文字内容：</label>
+    <input type="text" v-model="msg" @input="textChange" />
+  </div>
 </template>
 
 <style scoped>
 .read-the-docs {
   color: #888;
 }
+
+#text{
+  position: absolute;
+  top: 50px;
+  left: 50%;
+  z-index: 10;
+}
 </style>
-../lmmPlus/controler/TransformControler

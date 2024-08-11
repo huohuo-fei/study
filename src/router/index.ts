@@ -35,6 +35,10 @@ const routes = [
   {
     path:'/test-transform',
     component:() => import('../examples/TransformControler.vue')
+  },
+  {
+    path:'/test-text2D',
+    component:() => import('../examples/Text2D.vue')
   } 
 ]
 

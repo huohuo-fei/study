@@ -159,7 +159,9 @@ export class ControlFrame {
       dotSize,
       obj: {
         size: { x: imgW, y: imgH },
-        offset:{x:ox,y:oy}
+        boundingBox:{
+          min:{x:ox,y:oy}
+        }
       },
     } = this;
 
