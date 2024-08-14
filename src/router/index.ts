@@ -39,7 +39,11 @@ const routes = [
   {
     path:'/test-text2D',
     component:() => import('../examples/Text2D.vue')
-  } 
+  },
+  {
+    path:'/test-path',
+    component:() => import('../examples/Path.vue')
+  },
 ]
 
 const router = createRouter({

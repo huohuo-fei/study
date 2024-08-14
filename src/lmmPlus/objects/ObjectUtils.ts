@@ -10,7 +10,7 @@ const crtPathByMatrix = (
   ctx: CanvasRenderingContext2D,
   vertices: number[],
   matrix: Matrix3,
-  closePath = false
+  closePath = true
 ) => {
   const p0 = new Vector2(vertices[0], vertices[1]).applyMatrix3(matrix);
   ctx.moveTo(p0.x, p0.y);

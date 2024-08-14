@@ -29,6 +29,7 @@ onMounted(() => {
     <router-link to="/test-origin">基点变换</router-link>
     <router-link to="/test-transform">变换</router-link>
     <router-link to="/test-text2D">文字</router-link>
+    <router-link to="/test-Path">路径</router-link>
   </nav>
 
 </template>
