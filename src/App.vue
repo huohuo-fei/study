@@ -17,19 +17,13 @@ onMounted(() => {
     <router-view :size="size"></router-view>
   </div>
   <nav>
-    <div>测试--导航</div>
-    <router-link to="/">Hello world</router-link>
-    <router-link to="/test-matrix">矩阵测试</router-link>
-    <router-link to="/test-camera">相机测试</router-link>
-    <router-link to="/test-img">Img测试</router-link>
-    <router-link to="/test-group">Group测试</router-link>
-    <router-link to="/test-scene">Scene</router-link>
-    <router-link to="/test-controler">轨道控制器</router-link>
-    <router-link to="/test-imgcontroler">图案控制器</router-link>
-    <router-link to="/test-origin">基点变换</router-link>
-    <router-link to="/test-transform">变换</router-link>
+    <div>导航</div>
+    <!-- <router-link to="/test-controler">轨道控制器</router-link> -->
+    <!-- <router-link to="/test-imgcontroler">图案控制器</router-link> -->
+    <!-- <router-link to="/test-transform">变换</router-link> -->
     <router-link to="/test-text2D">文字</router-link>
     <router-link to="/test-Path">路径</router-link>
+    <router-link to="/test-three">3D</router-link>
   </nav>
 
 </template>

@@ -10,6 +10,8 @@
     "test": "vitest --root src"
   },
   "dependencies": {
+    "@types/three": "^0.167.1",
+    "three": "^0.167.1",
     "vue": "^3.4.21",
     "vue-router": "^4.3.3"
   },
