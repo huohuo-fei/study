@@ -1,5 +1,5 @@
-export const DASH_SIZE = 0.02
-export const GAP_SIZE = 0.02
+export const DASH_SIZE = 0.04
+export const GAP_SIZE = 0.04
 
 // 默认的几何体尺寸
 export const DEFAULT_SIZE_W = 0.4

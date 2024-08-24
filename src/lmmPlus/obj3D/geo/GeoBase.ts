@@ -3,30 +3,44 @@ import { ThreeLayer } from '../ThreeLayer';
 import { Cube } from '../compontent/cube';
 import { createPoint } from '../utils/point';
 import { converCoordinateTo3D, getPointOfFloor } from '../utils';
-import { Group, Mesh, Vector3,Points } from 'three';
+import { Group, Mesh, Vector3, Points, Quaternion } from 'three';
 import { CommonGeo } from './CommonGeo';
+import { Receiver } from '../../driver/Receiver';
 
-export class GeoBase {
+/**
+ * 统领当前激活的几何体，保存着几何体的实例对象 ，用于分发各种对几何体的操作
+ */
+export class GeoBase extends Receiver {
+  // 当前激活的几何体  -- 后续为数组形式  支持多个几何体
   geoObj: CommonGeo;
+  // 是否处于绘制模式  -- 只有在绘制底部线框以及拉伸高度时，为true
   isDraw: boolean = false;
+  // 是否处于绘制底部线框模式
   isBottom: boolean = true;
+  // 渲染层  -- 用于获取three 相关的方法
   renderLayer: ThreeLayer;
+  // 绘制底部线框的起始点位  -- 是世界坐标
   bottomPointStart: Vector3 = new Vector3();
+  // 拉伸开始的 XOY 平面的坐标
   stretchPointStart: number[] = [];
+  // 线框实例  在生成几何体后需要销毁
   bottomLine: Group | null = null;
-  originGroup: Group | null = null;;
-  pointMesh1: Points|null = null;
-  pointMesh2: Points|null = null;
+  // 几何体实例 -- 后续要扩充为数组  同时有多个几何体
+  originGroup!: Group;
+  // 两个圆点
+  pointMesh1: Points | null = null;
+  pointMesh2: Points | null = null;
   constructor(renderLayer: ThreeLayer) {
+    super();
     this.geoObj = new Cube(renderLayer);
     // renderLayer.scene.add(this.geoObj.geoInstance)
     this.renderLayer = renderLayer;
   }
 
-  pointerStart(customEvent: customEvent) {
+  onPointerdown(event: PointerEvent, customEvent: customEvent): void {
     if (this.isDraw) {
       this.isDraw = false;
-      this.isBottom = true
+      this.isBottom = true;
       this.createGeo();
       return;
     }
@@ -55,11 +69,11 @@ export class GeoBase {
         this.renderLayer.camera,
         this.renderLayer.floorPlank
       );
-      this.pointMesh1 = pointMesh
+      this.pointMesh1 = pointMesh;
       this.renderLayer.scene.add(pointMesh);
     }
   }
-  pointerdoing(customEvent: customEvent) {
+  onPointermove(event: PointerEvent, customEvent: customEvent): void {
     if (!this.isDraw) return;
     const [x, y] = converCoordinateTo3D(
       customEvent.x,
@@ -81,7 +95,7 @@ export class GeoBase {
       this.drawStretchLine([x, y]);
     }
   }
-  pointerend(customEvent: customEvent) {
+  onPointerup(event: PointerEvent, customEvent: customEvent): void {
     if (!this.isDraw) return;
 
     if (this.isBottom) {
@@ -99,7 +113,7 @@ export class GeoBase {
         this.renderLayer.camera,
         this.renderLayer.floorPlank
       );
-      this.pointMesh2 = pointMesh
+      this.pointMesh2 = pointMesh;
       this.renderLayer.scene.add(pointMesh);
     }
   }
@@ -112,13 +126,23 @@ export class GeoBase {
     }
   }
   drawStretchLine(movePoint: [number, number]) {
-    this.geoObj.drawBottomThree(this.stretchPointStart, movePoint);
+    // 这里是拉伸底面线框，计算的高度是 XOY平面上 Y值的变化，但由于相机的原因
+    // 拉伸的高度不能一直紧跟鼠标的高度，显示的效果会小于实际拉伸的值
+    const height = (movePoint[1] - this.stretchPointStart[1]) * 2;
+    this.geoObj.stretchBottomThree(height);
   }
   createGeo() {
     this.originGroup = this.geoObj.createGeo();
     this.originGroup && this.renderLayer.scene.add(this.originGroup);
-    this.originGroup.add(this.renderLayer.rotateControl)
-    this.removeObj()
+    this.originGroup.add(this.renderLayer.rotateCon.controler as Group);
+    this.renderLayer.baseLayer.changeMode(eventType.rotate3D);
+    this.removeObj();
+  }
+
+  // 旋转几何体 并更新相应的虚线
+  rotateGeo(quaternion: Quaternion) {
+    this.originGroup!.applyQuaternion(quaternion);
+    this.geoObj.updateDash();
   }
   // 销毁内存中的对象
   destroyObj(obj: any) {
@@ -143,16 +167,16 @@ export class GeoBase {
     });
   }
 
-  removeObj(){
-    this.destroyObj(this.bottomLine)
-    this.destroyObj(this.pointMesh1)
-    this.destroyObj(this.pointMesh2)
-    this.renderLayer.scene.remove(this.pointMesh1 as Points)
-    this.renderLayer.scene.remove(this.pointMesh2 as Points)
-    this.renderLayer.scene.remove(this.bottomLine as Group)
-    this.bottomPointStart = new Vector3()
-    this.bottomLine = null
-    this.pointMesh1 = null
-    this.pointMesh2 = null
+  removeObj() {
+    this.destroyObj(this.bottomLine);
+    this.destroyObj(this.pointMesh1);
+    this.destroyObj(this.pointMesh2);
+    this.renderLayer.scene.remove(this.pointMesh1 as Points);
+    this.renderLayer.scene.remove(this.pointMesh2 as Points);
+    this.renderLayer.scene.remove(this.bottomLine as Group);
+    this.bottomPointStart = new Vector3();
+    this.bottomLine = null;
+    this.pointMesh1 = null;
+    this.pointMesh2 = null;
   }
 }

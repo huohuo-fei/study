@@ -45,7 +45,7 @@ class Driver {
       x:clientX,
       y:clientY,
       pointerId,
-      eventType:eventType.draw3D
+      eventType:recriver.getMode()
     }
     if(dom){
       const {x,y} = dom.getBoundingClientRect()

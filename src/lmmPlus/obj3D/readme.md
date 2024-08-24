@@ -1,0 +1,2 @@
+- 在scene 场景中的子元素 必须都是 group -- point 暂时特殊处理
+- 所有的几何体、控制器 都是以Group 添加到 scene中

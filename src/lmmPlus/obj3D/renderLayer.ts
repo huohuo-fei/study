@@ -3,6 +3,7 @@ import { EventDispatcher } from '../core/EventDispatcher';
 import { ThreeLayer } from './ThreeLayer';
 import { GeoBase } from './geo/GeoBase';
 import { customEvent } from '../driver';
+import { eventType } from '../driver';
 /** 每个画布的渲染层  可以有 2d /3d初始化后 生成一个 renderlayer 之后所有的画布操作
  * 都是依据renderLayer 进行
  */
@@ -22,6 +23,7 @@ export class RenderLayer extends Receiver {
   isUpdateBgCanvas:boolean = false
   uiCtx:CanvasRenderingContext2D |null
   bgCtx:CanvasRenderingContext2D |null
+  eventType: eventType = eventType.draw3D;
 
   constructor(uiCanvas: HTMLCanvasElement, bgCanvas: HTMLCanvasElement) {
     super();
@@ -34,8 +36,9 @@ export class RenderLayer extends Receiver {
     this.topCanvas.width = width;
     this.topCanvas.height = height;
     // const ctx = this.topCanvas
-    this.renderLayer = new ThreeLayer(this.topCanvas);
+    this.renderLayer = new ThreeLayer(this.topCanvas,this);
     this.geoBase = new GeoBase(this.renderLayer);
+    this.renderLayer.geoBase = this.geoBase
     this.uiCtx = this.uiCanvas.getContext('2d')
     this.bgCtx = this.bgCanvas.getContext('2d')
     this.loopRender()
@@ -43,16 +46,36 @@ export class RenderLayer extends Receiver {
   }
 
   onPointerdown(event: PointerEvent,customEvent:customEvent) {
-    this.geoBase?.pointerStart(customEvent)
+    // console.log(customEvent);
+    if(customEvent.eventType === eventType.draw3D){
+      this.geoBase?.onPointerdown(event,customEvent)
+    }else if(customEvent.eventType === eventType.rotate3D){
+      this.renderLayer.rotateCon.onPointerdown(event,customEvent)
+    }
   }
 
   onPointermove(event: PointerEvent,customEvent:customEvent): void {
-    this.geoBase?.pointerdoing(customEvent)
+    switch(customEvent.eventType){
+      case eventType.draw3D:
+        this.geoBase?.onPointermove(event,customEvent)
+        break;
+      case eventType.rotate3D:
+      this.renderLayer.rotateCon.onPointermove(event,customEvent)
+      break
+    }
+    
 
   }
 
   onPointerup(event: PointerEvent,customEvent:customEvent): void {
-    this.geoBase?.pointerend(customEvent)
+    switch(customEvent.eventType){
+      case eventType.draw3D:
+        this.geoBase?.onPointerup(event,customEvent)
+        break;
+      case eventType.rotate3D:
+      this.renderLayer.rotateCon.onPointerup(event,customEvent)
+      break
+    }
 
   }
 
@@ -77,5 +100,12 @@ export class RenderLayer extends Receiver {
     setInterval(() => {
       this.renderDraw()
     },30)
+  }
+
+  changeMode(eventType:eventType){
+    this.eventType = eventType
+  }
+  getMode(){
+    return this.eventType
   }
 }

@@ -7,6 +7,8 @@ import {
   AlwaysDepth,
   Material,
   NeverDepth,
+  Vector3,
+  Object3D,
 } from 'three';
 import {
   TOP_RENDER_ORDER,
@@ -15,16 +17,35 @@ import {
   ROTATE_BAND_OFFSET,
 } from './const';
 
-class RotateControl {
+import { converCoordinateTo3D, getObjByPoint } from '../utils';
+import { Receiver } from '../../driver/Receiver';
+import { ThreeLayer } from '../ThreeLayer';
+import { customEvent } from '../../driver';
+
+enum rotateType {
+  trackball = 'trackball',
+  fixAxis = 'fixAxis',
+  none = 'none',
+}
+
+class RotateControl extends Receiver {
   // 中间的球体
-  sphere: Mesh;
+  sphere!: Mesh;
   // 三条旋转带
-  cylinder1: Mesh;
-  cylinder2: Mesh;
-  cylinder3: Mesh;
+  cylinder1!: Mesh;
+  cylinder2!: Mesh;
+  cylinder3!: Mesh;
   // 整个旋转控制器
-  rotateControl: Mesh;
-  constructor() {
+  controler!: Group;
+  isTrackball: boolean = false;
+  renderLayer: ThreeLayer;
+  rotateMode: rotateType = rotateType.none;
+  constructor(renderLayer: ThreeLayer) {
+    super();
+    this.renderLayer = renderLayer;
+    this.initControl();
+  }
+  initControl() {
     // 中间的球体
     const sphereGeometry = new SphereGeometry(ROTATE_R);
     const sphereMaterial = new MeshBasicMaterial({
@@ -86,9 +107,9 @@ class RotateControl {
     this.cylinder3.rotateZ(Math.PI / 2);
     this.cylinder3.name = 'axis_x';
 
-    this.rotateControl = new Mesh();
-    this.rotateControl.name = 'rotate_control';
-    (this.rotateControl.material as Material).depthFunc = AlwaysDepth;
+    this.controler = new Group();
+    this.controler.name = 'rotate_control';
+    // (this.controler.material as Material).depthFunc = AlwaysDepth;
 
     const rotateBand = new Group();
 
@@ -98,11 +119,72 @@ class RotateControl {
     rotateBand.add(this.cylinder2);
     rotateBand.add(this.cylinder3);
     rotateBand.name = 'rotate_band';
-    this.rotateControl.add(rotateBand);
-    this.rotateControl.add(this.sphere);
+    this.controler.add(rotateBand);
+    this.controler.add(this.sphere);
+  }
+
+  onPointerdown(event: PointerEvent, customEvent: customEvent): void {
+    const [x, y] = converCoordinateTo3D(
+      customEvent.x,
+      customEvent.y,
+      this.renderLayer.width,
+      this.renderLayer.height
+    );
+    const targerObjArr = [
+      this.controler,
+      this.renderLayer.geoBase.originGroup,
+    ];
+    const resObj = getObjByPoint(x, y, this.renderLayer.camera, targerObjArr);
+    if (resObj) {
+      // 点击了目标物体 首先需要判断 当前点击的物体中 是否有旋转控制器
+      const rotateCon = resObj.filter((obj) => {
+        return obj.object.name.includes('axis');
+      });
+      if (rotateCon.length) {
+        // 点击了 旋转控制器 需要判断 首个元素是否控制球
+        const objectName = rotateCon[0].object.name;
+        if (objectName === 'axis_sphere') {
+          // 应用轨迹球旋转模式
+          this.renderLayer.trackballObj.pointerdown(
+            customEvent.x,
+            customEvent.y
+          );
+          this.rotateMode = rotateType.trackball;
+        } else {
+          // 固定轴
+          this.renderLayer.trackballObj.pointerdown(
+            customEvent.x,
+            customEvent.y,
+            objectName,
+            this.renderLayer.geoBase.originGroup.matrix,
+            this.renderLayer.geoBase.originGroup.position
+          );
+          this.rotateMode = rotateType.fixAxis;
+        }
+      } else {
+        this.rotateMode = rotateType.none;
+      }
+    } else {
+      console.log('move 模式');
+      this.rotateMode = rotateType.none;
+    }
+  }
+  onPointermove(event: PointerEvent, customEvent: customEvent): void {
+    if (
+      this.rotateMode === rotateType.trackball ||
+      this.rotateMode === rotateType.fixAxis
+    ) {
+      const quaternion = this.renderLayer.trackballObj.pointermove(
+        customEvent.x,
+        customEvent.y
+      );
+      this.renderLayer.geoBase.rotateGeo(quaternion);
+    }
+  }
+  onPointerup(event: PointerEvent, customEvent: customEvent): void {
+    this.rotateMode = rotateType.none;
+    this.renderLayer.trackballObj.pointerup();
   }
 }
 
-const rotateControl = new RotateControl();
-
-export default rotateControl.rotateControl;
+export { RotateControl };

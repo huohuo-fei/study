@@ -16,26 +16,36 @@ import {
   Line,
   LineDashedMaterial,
   TypedArray,
+  Material,
 } from 'three';
 import { DASH_SIZE, GAP_SIZE } from './const/boxConst';
 import { CommonGeo } from '../geo/CommonGeo';
+
+/**
+ * 立方体
+ */
 export class Cube extends CommonGeo {
-  geoInstance!: Mesh;
-  bottom_line: any;
-  bottom_geo: any;
-  bottom_group: any;
-  top_line!: LineLoop;
-  side_line!: LineSegments;
-  height: number = 0;
+  // 底边 侧边 顶部的线框实例
+  bottom_line: LineLoop | null = null;
+  top_line: LineLoop | null = null;
+  side_line: LineSegments | null = null;
+  // 底部 侧边 顶部线框的buffer -- 可以更新这个buffre 不需要每次重新生成实例
+  bottom_geo: BufferGeometry | null = null;
+  top_geo: BufferGeometry | null = null;
+  side_geo: BufferGeometry | null = null;
+  // 保存着所有 绘制状态下生成的线框 底边 侧边 顶部三组
+  bottom_group: Group | null = null;
+  // 绘制底部线框的落点
   downPoint: Vector3 = new Vector3();
+  // 底部线框的结束点
   upPoint: Vector3 = new Vector3();
-  top_geo: any;
-  side_geo: any;
-  width: number = 0;
-  depth: number = 0;
-  lineMesh: any;
-  originGroup: any;
-  originTotalPoint: any;
+  
+  // -------- 几何体相关----------------//
+  // 几何体的边框  -- 这里使用自定义线框  用于后期单独改变线框的颜色以及虚线
+  lineMesh: Mesh | null = null;
+  // 立方体初始的八个顶点的位置  用于计算距离视点的最远位置  实现 虚线功能
+  originTotalPoint: number[] | null = null;
+  // 有正负的高度
   dirHeight: number = 0;
 
   drawBottom(startPoint: Vector3, endPoint: Vector3) {
@@ -66,7 +76,7 @@ export class Cube extends CommonGeo {
       // 新建一个组 用来保存 组成立方体边框的 12 跟线段
       this.bottom_group = new Group();
       this.bottom_group.name = 'bottomLine';
-      this.drawBottomThree();
+      this.stretchBottomThree();
       // 添加顶部 侧部 底部
       this.bottom_group.add(this.top_line as LineLoop);
       this.bottom_group.add(this.side_line as LineSegments);
@@ -84,9 +94,9 @@ export class Cube extends CommonGeo {
   }
 
   // 更新底面线框中 竖直线框的高度
-  drawBottomThree(startPoint?: number[], movePoint?: number[]) {
-    if (startPoint && movePoint) {
-      this.height = (movePoint[1] - startPoint[1]) * 2;
+  stretchBottomThree(height?: number) {
+    if (height) {
+      this.height = height;
     }
     const material = new LineBasicMaterial({
       color: '#ffffff',
@@ -94,7 +104,7 @@ export class Cube extends CommonGeo {
     // 先构建 立方体的顶面四条线段  使用 lineLoop
     const p0 = new Vector3(
       this.downPoint.x,
-      this.downPoint.y + this.height, 
+      this.downPoint.y + this.height,
       this.downPoint.z
     );
     const p1 = new Vector3(
@@ -183,7 +193,7 @@ export class Cube extends CommonGeo {
   createGeo() {
     this.width = Math.abs(this.upPoint.x - this.downPoint.x);
     this.depth = Math.abs(this.upPoint.z - this.downPoint.z);
-    this.dirHeight = this.height
+    this.dirHeight = this.height;
     this.height = Math.abs(this.height);
     return this.buildGeoBySize();
   }
@@ -216,7 +226,7 @@ export class Cube extends CommonGeo {
     this.originGroup.add(this.realGeo);
     this.originGroup.add(lineMesh);
     this.originGroup.name = 'cubeBox';
-    this.transformGeo(this.originGroup)
+    this.transformGeo(this.originGroup);
     return this.originGroup;
   }
   // 将边缘线框 转为普通的线框 -- 为了解决在导入导出几何体时 不支持 边缘集合体的数据
@@ -411,11 +421,65 @@ export class Cube extends CommonGeo {
   }
 
   // 根据落点信息 将几何体移到绘制的位置上 默认插入到原点
-  transformGeo(geo:Group){
+  transformGeo(geo: Group) {
     const deltaX = (this.downPoint.x + this.upPoint.x) / 2;
     const deltaZ = (this.downPoint.z + this.upPoint.z) / 2;
     geo.translateX(deltaX);
     geo.translateZ(deltaZ);
     geo.translateY(this.dirHeight / 2);
+  }
+
+  // 相机改变 更新虚线
+  updateDash() {
+    const worldPosition = this.getWorldPoint(this.originTotalPoint as number[]);
+    const maxDistanceArr = this.searchDash(worldPosition as number[]);
+    if (!this.lineMesh) return;
+
+    // 遍历模型，寻找最远点 并更新材质
+    for (let i = 0; i < this.lineMesh.children.length; i++) {
+      const originVertices = (
+        this.lineMesh.children[i] as Mesh
+      ).geometry.getAttribute('position').array;
+      const worldLinePosition = this.getWorldPoint(originVertices as unknown as number[]);
+      const isDash = this.checkDash(worldLinePosition, maxDistanceArr);
+      const childMesh = this.lineMesh.children[i] as Mesh;
+
+      if (isDash) {
+        // 如果是虚线 设置虚线的材质
+        // 先判断当前是否需要更新材质   -- 这里有 bug 需要更新对应轴的缩放比
+        if (childMesh.material instanceof LineBasicMaterial) {
+          (childMesh.material as Material).dispose();
+          childMesh.material = new LineDashedMaterial({
+            color: 0x687b7c,
+            linewidth: 1,
+            scale: 1,
+            dashSize: DASH_SIZE,
+            gapSize: GAP_SIZE,
+          });
+        }
+      } else {
+        // 设置实线的材质
+        if (childMesh.material instanceof LineDashedMaterial) {
+          (childMesh.material as Material).dispose();
+          childMesh.material = new LineBasicMaterial({
+            color: '#ffffff',
+          });
+        }
+      }
+    }
+  }
+  // 每次寻找虚线之前，需要根据原始的点 生成一份世界坐标系下的点
+  getWorldPoint(resourceData: number[]) {
+    const worldPosition = [];
+    for (let i = 0; i < resourceData.length; i += 3) {
+      const p0 = resourceData[i];
+      const p1 = resourceData[i + 1];
+      const p2 = resourceData[i + 2];
+      const point = new Vector3(p0, p1, p2).applyMatrix4(
+        this.originGroup!.matrix
+      );
+      worldPosition.push(...point);
+    }
+    return worldPosition;
   }
 }

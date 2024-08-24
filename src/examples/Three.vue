@@ -3,18 +3,19 @@ import { defineProps, onMounted, ref } from 'vue';
 import { ThreeLayer } from '../lmmPlus/obj3D/ThreeLayer';
 import { Cube } from '../lmmPlus/obj3D/compontent/cube';
 import {RenderApp} from '../lmmPlus/obj3D'
+import { eventType } from '../lmmPlus/driver';
 
 const props = defineProps({
   size: {
     type: Object,
     default: { width: 0, height: 0 },
   },
+  threeMode:{
+    type:String,
+    default:eventType.draw3D
+  }
 });
-
-console.log(props,'props');
-
 const canvasContainer = ref<HTMLCanvasElement>();
-let threeLayer: ThreeLayer;
 const renderKit = RenderApp 
 
 function testCube(){

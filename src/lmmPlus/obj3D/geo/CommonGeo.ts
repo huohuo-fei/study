@@ -1,8 +1,16 @@
-import { Mesh, MeshStandardMaterial, NeverDepth, LessEqualDepth, Vector3, Group,OrthographicCamera } from "three";
-import { ThreeLayer } from "../ThreeLayer";
+import {
+  Mesh,
+  MeshStandardMaterial,
+  NeverDepth,
+  LessEqualDepth,
+  Vector3,
+  Group,
+  OrthographicCamera,
+} from 'three';
+import { ThreeLayer } from '../ThreeLayer';
 // 几何体的基类  -- 这里提供了每个几何体需要有的方法
 class CommonGeo {
-   // 当前选中面的索引
+  // 当前选中面的索引
   selectColorIndex: number;
   // 材质索引和颜色值的 map
   alreadyChangeIndexs!: Map<number, string>;
@@ -10,15 +18,20 @@ class CommonGeo {
   clearColorIndex: number;
   // 一个确定的几何体  不包含任何边框
   realGeo!: Mesh;
+  // 生成的几何体组 包含几何体 以及 外边框
+  originGroup: Group | null = null;
+  // 渲染层
   renderLayer: ThreeLayer;
   camera: OrthographicCamera;
+  height: number = 0;
+  width: number = 0;
+  depth: number = 0;
   constructor(renderLayer: ThreeLayer) {
     this.renderLayer = renderLayer;
     this.camera = this.renderLayer.camera;
     this.selectColorIndex = -1;
     this.clearColorIndex = -1;
-    this.alreadyChangeIndexs = new Map()
-
+    this.alreadyChangeIndexs = new Map();
   }
   /**
    * 给某个面 填充颜色
@@ -29,7 +42,7 @@ class CommonGeo {
   fillColorStyle(materialIndex: number, color: string, type: string) {
     if (!(this.realGeo.material instanceof Array)) return;
     // 如果传入 none 表示时清空颜色
-    if (color === "none") {
+    if (color === 'none') {
       this.realGeo.material[materialIndex].depthFunc = NeverDepth;
     } else {
       (
@@ -39,10 +52,10 @@ class CommonGeo {
     }
 
     this.selectColorIndex = materialIndex;
-    if (type === "down") {
+    if (type === 'down') {
       // 指针按下 需要更新颜色信息
 
-      if (color === "none") {
+      if (color === 'none') {
         this.alreadyChangeIndexs.delete(materialIndex);
       } else {
         this.alreadyChangeIndexs.set(materialIndex, color);
@@ -70,7 +83,7 @@ class CommonGeo {
       } else {
         (
           this.realGeo.material[clearColorIndex] as MeshStandardMaterial
-        ).color.setStyle("#fff");
+        ).color.setStyle('#fff');
         this.realGeo.material[clearColorIndex].depthFunc = NeverDepth;
       }
     }
@@ -95,14 +108,18 @@ class CommonGeo {
     }
   }
 
-  // 接口  每个几何体都需要实现的方法
-  createGeo(){
-    return new Group
+  // 接口 ---------------- 每个几何体都需要实现的方法
+  createGeo() {
+    return new Group();
   }
-  drawBottom(startPoint: Vector3, endPoint: Vector3):Group{
-    return new Group
+  updateDash() {}
+
+  // 绘制线框  -- 主要是绘制底部线框 拉伸的高度为零
+  drawBottom(startPoint: Vector3, endPoint: Vector3): Group | null {
+    return new Group();
   }
-  drawBottomThree(startPoint?: number[], movePoint?: number[]){}
+  // 拉伸底部线框 -- 主要是根据高度更新线框
+  stretchBottomThree(height?: number) {}
 }
 
 export { CommonGeo };

@@ -1,4 +1,4 @@
-import { Raycaster, Vector2, Vector3 } from "three";
+import { Group, Mesh, OrthographicCamera, Raycaster, Vector2, Vector3 } from "three";
 
   // 获取3d 世界坐标
 //  export function get3DCoordinate(offsetX: number, offsetY: number,width:number,height:number): number[] {
@@ -52,5 +52,26 @@ export function getPointOfFloor(x: number, y: number, camera: any, floorPlan: an
   } else {
     // console.log('No intersection found.');
     return new Vector3(0, 0, 0);
+  }
+}
+
+export function getObjByPoint(x:number,y:number,camera:OrthographicCamera,obj:Group[]){
+  const raycaster = new Raycaster();
+  raycaster.params.Line.threshold = 0.01;
+
+  // 获取鼠标点击的屏幕坐标
+  const mouse = new Vector2(x, y);
+
+  // 设置 Raycaster 的起点和方向
+  raycaster.setFromCamera(mouse, camera);
+
+  // 计算 Raycaster 与坐标平面 XOZ 的焦点
+  const intersection = raycaster.intersectObjects(obj);
+
+  if (intersection.length > 0) {
+    // 获取焦点的世界坐标
+    return intersection;
+  } else {
+    return false;
   }
 }

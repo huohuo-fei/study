@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-
+import { eventType } from './lmmPlus/driver';
 const contRef = ref<HTMLDivElement>()
 const size = ref<{width:number|undefined,height:number|undefined}>({width:0,height:0})
-
+const threeMode = ref<eventType>(eventType.draw3D)
 onMounted(() => {
   const cont = contRef.value
   size.value.width = cont?.clientWidth
@@ -14,7 +14,7 @@ onMounted(() => {
 
 <template>
   <div id="cont" ref="contRef">
-    <router-view :size="size"></router-view>
+    <router-view :size="size" :three-mode="threeMode"></router-view>
   </div>
   <nav>
     <div>导航</div>
@@ -25,6 +25,12 @@ onMounted(() => {
     <router-link to="/test-Path">路径</router-link>
     <router-link to="/test-three">3D</router-link>
   </nav>
+
+  <div>
+    <button @click="threeMode =eventType.rotate3D ">rotate</button>
+    <button @click="threeMode = eventType.fill3D">fill</button>
+    <button @click="threeMode = eventType.resize3D">resize</button>
+  </div>
 
 </template>
 
