@@ -26,6 +26,9 @@ class CommonGeo {
   height: number = 0;
   width: number = 0;
   depth: number = 0;
+  totalScaleX:number = 1
+  totalScaleY:number = 1
+  totalScaleZ:number = 1
   constructor(renderLayer: ThreeLayer) {
     this.renderLayer = renderLayer;
     this.camera = this.renderLayer.camera;
@@ -120,6 +123,8 @@ class CommonGeo {
   }
   // 拉伸底部线框 -- 主要是根据高度更新线框
   stretchBottomThree(height?: number) {}
+  updateOriginGeo(resizeDir: string, distance: number){}
+  saveOutSize(){}
 }
 
 export { CommonGeo };

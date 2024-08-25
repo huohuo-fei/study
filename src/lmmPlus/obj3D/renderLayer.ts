@@ -20,9 +20,9 @@ export class RenderLayer extends Receiver {
   bgCanvas: HTMLCanvasElement;
   width: number;
   height: number;
-  isUpdateBgCanvas:boolean = false
-  uiCtx:CanvasRenderingContext2D |null
-  bgCtx:CanvasRenderingContext2D |null
+  isUpdateBgCanvas: boolean = false;
+  uiCtx: CanvasRenderingContext2D | null;
+  bgCtx: CanvasRenderingContext2D | null;
   eventType: eventType = eventType.draw3D;
 
   constructor(uiCanvas: HTMLCanvasElement, bgCanvas: HTMLCanvasElement) {
@@ -36,76 +36,84 @@ export class RenderLayer extends Receiver {
     this.topCanvas.width = width;
     this.topCanvas.height = height;
     // const ctx = this.topCanvas
-    this.renderLayer = new ThreeLayer(this.topCanvas,this);
+    this.renderLayer = new ThreeLayer(this.topCanvas, this);
     this.geoBase = new GeoBase(this.renderLayer);
-    this.renderLayer.geoBase = this.geoBase
-    this.uiCtx = this.uiCanvas.getContext('2d')
-    this.bgCtx = this.bgCanvas.getContext('2d')
-    this.loopRender()
-    this.renderBg()
+    this.renderLayer.geoBase = this.geoBase;
+    this.uiCtx = this.uiCanvas.getContext('2d');
+    this.bgCtx = this.bgCanvas.getContext('2d');
+    this.loopRender();
+    this.renderBg();
   }
 
-  onPointerdown(event: PointerEvent,customEvent:customEvent) {
-    // console.log(customEvent);
-    if(customEvent.eventType === eventType.draw3D){
-      this.geoBase?.onPointerdown(event,customEvent)
-    }else if(customEvent.eventType === eventType.rotate3D){
-      this.renderLayer.rotateCon.onPointerdown(event,customEvent)
-    }
-  }
-
-  onPointermove(event: PointerEvent,customEvent:customEvent): void {
-    switch(customEvent.eventType){
+  onPointerdown(event: PointerEvent, customEvent: customEvent) {
+    switch (customEvent.eventType) {
       case eventType.draw3D:
-        this.geoBase?.onPointermove(event,customEvent)
+        this.geoBase?.onPointerdown(event, customEvent);
         break;
       case eventType.rotate3D:
-      this.renderLayer.rotateCon.onPointermove(event,customEvent)
-      break
+        this.renderLayer.rotateCon.onPointerdown(event, customEvent);
+        break;
+      case eventType.resize3D:
+        this.renderLayer.resizeCon.onPointerdown(event, customEvent);
+        break;
     }
-    
-
   }
 
-  onPointerup(event: PointerEvent,customEvent:customEvent): void {
-    switch(customEvent.eventType){
+  onPointermove(event: PointerEvent, customEvent: customEvent): void {
+    switch (customEvent.eventType) {
       case eventType.draw3D:
-        this.geoBase?.onPointerup(event,customEvent)
+        this.geoBase?.onPointermove(event, customEvent);
         break;
       case eventType.rotate3D:
-      this.renderLayer.rotateCon.onPointerup(event,customEvent)
-      break
+        this.renderLayer.rotateCon.onPointermove(event, customEvent);
+        break;
+      case eventType.resize3D:
+        this.renderLayer.resizeCon.onPointermove(event, customEvent);
+        break;
     }
+  }
 
+  onPointerup(event: PointerEvent, customEvent: customEvent): void {
+    switch (customEvent.eventType) {
+      case eventType.draw3D:
+        this.geoBase?.onPointerup(event, customEvent);
+        break;
+      case eventType.rotate3D:
+        this.renderLayer.rotateCon.onPointerup(event, customEvent);
+        break;
+      case eventType.resize3D:
+        this.renderLayer.resizeCon.onPointerup(event, customEvent);
+        break;
+    }
   }
 
   renderDraw() {
     this.renderLayer.render();
-    this.uiCtx?.clearRect(0,0,this.width,this.height)
+    this.uiCtx?.clearRect(0, 0, this.width, this.height);
     this.uiCtx?.drawImage(this.topCanvas, 0, 0);
   }
 
-  renderBg(){
-    if(this.bgCtx){
-      this.bgCtx.fillStyle = '#39597e'
-      this.bgCtx.fillRect(0,0,this.width,this.height)
+  renderBg() {
+    if (this.bgCtx) {
+      this.bgCtx.fillStyle = '#39597e';
+      this.bgCtx.fillRect(0, 0, this.width, this.height);
     }
   }
 
   getDomElement(): HTMLElement | null {
-    return this.uiCanvas
+    return this.uiCanvas;
   }
 
-  loopRender(){
+  loopRender() {
     setInterval(() => {
-      this.renderDraw()
-    },30)
+      this.renderDraw();
+    }, 30);
   }
 
-  changeMode(eventType:eventType){
-    this.eventType = eventType
+  changeMode(eventType: eventType) {
+    this.eventType = eventType;
   }
-  getMode(){
-    return this.eventType
+  getMode() {
+    return this.eventType;
   }
 }

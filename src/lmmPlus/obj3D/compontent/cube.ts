@@ -20,6 +20,10 @@ import {
 } from 'three';
 import { DASH_SIZE, GAP_SIZE } from './const/boxConst';
 import { CommonGeo } from '../geo/CommonGeo';
+import {
+  DEFAULT_STRETCH,
+  UN_UPDATE_RESIZE_CONTROL,
+} from '../threeSystem/const';
 
 /**
  * 立方体
@@ -39,7 +43,7 @@ export class Cube extends CommonGeo {
   downPoint: Vector3 = new Vector3();
   // 底部线框的结束点
   upPoint: Vector3 = new Vector3();
-  
+
   // -------- 几何体相关----------------//
   // 几何体的边框  -- 这里使用自定义线框  用于后期单独改变线框的颜色以及虚线
   lineMesh: Mesh | null = null;
@@ -440,7 +444,9 @@ export class Cube extends CommonGeo {
       const originVertices = (
         this.lineMesh.children[i] as Mesh
       ).geometry.getAttribute('position').array;
-      const worldLinePosition = this.getWorldPoint(originVertices as unknown as number[]);
+      const worldLinePosition = this.getWorldPoint(
+        originVertices as unknown as number[]
+      );
       const isDash = this.checkDash(worldLinePosition, maxDistanceArr);
       const childMesh = this.lineMesh.children[i] as Mesh;
 
@@ -481,5 +487,112 @@ export class Cube extends CommonGeo {
       worldPosition.push(...point);
     }
     return worldPosition;
+  }
+
+  // 更新原点处几何体的尺寸 -- 除了跟新几何体的尺寸 还需要更新虚线的间距
+  updateOriginGeo(resizeDir: string, distance: number) {
+    if (!this.originGroup) return;
+    const { totalScaleX, totalScaleY, totalScaleZ } = this;
+    if (resizeDir === 'up') {
+      // 最新的 值
+      const newValue = totalScaleY + distance / this.height;
+      if (newValue < DEFAULT_STRETCH) {
+        return UN_UPDATE_RESIZE_CONTROL;
+      }
+      this.originGroup.scale.set(totalScaleX, newValue, totalScaleZ);
+      this.setDashStyleByDir(resizeDir, newValue);
+    } else if (resizeDir === 'right') {
+      const newValue = totalScaleX + distance / this.width;
+
+      if (newValue < DEFAULT_STRETCH) {
+        return UN_UPDATE_RESIZE_CONTROL;
+      }
+      this.originGroup.scale.set(newValue, totalScaleY, totalScaleZ);
+      this.setDashStyleByDir(resizeDir, newValue);
+    } else {
+      const newValue = totalScaleZ + distance / this.depth;
+      if (newValue < DEFAULT_STRETCH) {
+        return UN_UPDATE_RESIZE_CONTROL;
+      }
+      this.originGroup.scale.set(
+        totalScaleX,
+        totalScaleY,
+        newValue
+      );
+      this.setDashStyleByDir(resizeDir, newValue);
+    }
+  }
+
+  // 在 resize 时，重新设置当前虚线的长度  -- 注意 这里线段的顺序，
+  setDashStyleByDir(dir: string, scaleValue: number) {
+    // 根据改变的方向 确定虚线索引
+    if (dir === 'up') {
+      this.dashUpdateLine(scaleValue);
+    } else if (dir === 'right') {
+      this.dashRightUpdateLine(scaleValue);
+    } else {
+      this.dashFrontUpdateLine(scaleValue);
+    }
+  }
+  updateLineDash(childMesh: Mesh, scale: number) {
+    (childMesh.material as LineDashedMaterial).dashSize = DASH_SIZE / scale;
+    (childMesh.material as LineDashedMaterial).gapSize = GAP_SIZE / scale;
+  }
+  dashUpdateLine(scaleValue: number) {
+    for (let i = 8; i < this.lineMesh!.children.length; i++) {
+      const childMesh = this.lineMesh!.children[i] as Mesh;
+
+      if (childMesh.material instanceof LineDashedMaterial) {
+        this.updateLineDash(childMesh, scaleValue);
+      }
+    }
+  }
+  dashRightUpdateLine(scaleValue: number) {
+    for (let i of [1, 3]) {
+      const childMesh = this.lineMesh!.children[i] as Mesh;
+
+      // 寻找顶部的
+      if (childMesh.material instanceof LineDashedMaterial) {
+        this.updateLineDash(childMesh, scaleValue);
+
+        return;
+      }
+      let bottomIndex = 0;
+      // 寻找底部的
+      if (i === 1) {
+        bottomIndex = 7;
+      } else {
+        bottomIndex = 5;
+      }
+      const childMeshBottom = this.lineMesh!.children[bottomIndex] as Mesh;
+      if (childMeshBottom.material instanceof LineDashedMaterial) {
+        this.updateLineDash(childMeshBottom, scaleValue);
+      }
+    }
+  }
+  dashFrontUpdateLine(scaleValue: number) {
+    for (let i of [0, 2]) {
+      const childMesh = this.lineMesh!.children[i] as Mesh;
+
+      if (childMesh.material instanceof LineDashedMaterial) {
+        this.updateLineDash(childMesh, scaleValue);
+
+        return;
+      }
+      const bottomIndex = i + 4;
+      const childMeshBottom = this.lineMesh!.children[bottomIndex] as Mesh;
+
+      if (childMeshBottom.material instanceof LineDashedMaterial) {
+        this.updateLineDash(childMeshBottom, scaleValue);
+      }
+    }
+  }
+
+  // 将缩放量累积起来，下次的变换 基于之前缩放的和
+  saveOutSize() {
+    const scale = this.originGroup!.scale;
+    this.totalScaleX = scale.x;
+    this.totalScaleY = scale.y;
+    this.totalScaleZ = scale.z;
   }
 }

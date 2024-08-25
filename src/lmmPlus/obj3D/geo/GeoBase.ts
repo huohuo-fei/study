@@ -166,6 +166,12 @@ export class GeoBase extends Receiver {
     this.originGroup!.applyQuaternion(quaternion);
     this.geoObj.updateDash();
   }
+  resizeGeo(dir:string,distance:number){
+    this.geoObj.updateOriginGeo(dir,distance)
+  }
+  resizeGeoEnd(){
+    this.geoObj.saveOutSize()
+  }
   // 销毁内存中的对象
   destroyObj(obj: any) {
     obj.traverse((obj: any) => {

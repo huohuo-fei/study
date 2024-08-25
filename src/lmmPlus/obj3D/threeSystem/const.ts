@@ -25,8 +25,8 @@ export const UPDATE_RESIZE_CONTROL = true
 export const UN_UPDATE_RESIZE_CONTROL = false 
 
 // reseize控制器 的 控制点 和控制条的尺寸
-export const  RESIZE_CYLINDER_R = 0.005
-export const  RESIZE_CIRCLE_R = 0.02
+export const  RESIZE_CYLINDER_R = 0.008
+export const  RESIZE_CIRCLE_R = 0.03
 
 // rotate控制器 的半径、带宽、偏移量
 export const ROTATE_R = 0.3
