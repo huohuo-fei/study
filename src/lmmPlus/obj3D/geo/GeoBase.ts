@@ -6,6 +6,7 @@ import { converCoordinateTo3D, getPointOfFloor } from '../utils';
 import { Group, Mesh, Vector3, Points, Quaternion } from 'three';
 import { CommonGeo } from './CommonGeo';
 import { Receiver } from '../../driver/Receiver';
+import { Vector2 } from '../../math/Vector2';
 
 /**
  * 统领当前激活的几何体，保存着几何体的实例对象 ，用于分发各种对几何体的操作
@@ -121,21 +122,42 @@ export class GeoBase extends Receiver {
   drawBottomLine(startPoint: Vector3, endPoint: Vector3) {
     const bottomLine = this.geoObj.drawBottom(startPoint, endPoint);
     if (!this.bottomLine) {
-      this.renderLayer.scene.add(bottomLine);
+      this.renderLayer.scene.add(bottomLine!);
       this.bottomLine = bottomLine;
     }
   }
   drawStretchLine(movePoint: [number, number]) {
-    // 这里是拉伸底面线框，计算的高度是 XOY平面上 Y值的变化，但由于相机的原因
-    // 拉伸的高度不能一直紧跟鼠标的高度，显示的效果会小于实际拉伸的值
-    const height = (movePoint[1] - this.stretchPointStart[1]) * 2;
+    const pointPos = getPointOfFloor(
+      this.stretchPointStart[0],
+      this.stretchPointStart[1],
+      this.renderLayer.camera,
+      this.renderLayer.floorPlank
+    );
+    const pointPos2 = getPointOfFloor(
+      movePoint[0],
+      movePoint[1],
+      this.renderLayer.camera,
+      this.renderLayer.floorPlank
+    );
+    /* 通过计算在XOZ平面移动的距离 在 视线方向投影到 XOZ平面上向量的点乘
+    *  然后与相机的高度做比值，可以将XOZ平面的移动距离 映射到 相机视角中的Y值
+    */
+    const totalHeight = this.renderLayer.camera.position.y
+    const cameraXOZ = new Vector2(this.renderLayer.camera.position.x,this.renderLayer.camera.position.z)
+    const geoXOZ = new Vector2(pointPos.x,pointPos.z)
+    const moveXOZ = new Vector2(pointPos2.x,pointPos2.z)
+    const dir = cameraXOZ.clone().normalize()
+    const moveValue = moveXOZ.clone().sub(geoXOZ).dot(dir)
+    const ratio = moveValue/ (cameraXOZ.length())
+    const height = -ratio * totalHeight 
     this.geoObj.stretchBottomThree(height);
   }
   createGeo() {
     this.originGroup = this.geoObj.createGeo();
     this.originGroup && this.renderLayer.scene.add(this.originGroup);
-    this.originGroup.add(this.renderLayer.rotateCon.controler as Group);
-    this.renderLayer.baseLayer.changeMode(eventType.rotate3D);
+    // this.originGroup.add(this.renderLayer.resizeCon.resizeGroup);
+    this.renderLayer.resizeCon.registerControl(this.geoObj)
+    this.renderLayer.baseLayer.changeMode(eventType.resize3D);
     this.removeObj();
   }
 

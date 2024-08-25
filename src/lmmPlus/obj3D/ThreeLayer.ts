@@ -6,6 +6,7 @@ import {
   DirectionalLight,
   Mesh,
   Vector3,
+  AxesHelper,
 } from 'three';
 import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js';
 import createCamera from './threeSystem/camera';
@@ -16,6 +17,7 @@ import createScene from './threeSystem/scene';
 import createFloorPlank from './threeSystem/floorPlank';
 import TrackballObj from './threeSystem/TrackballObj'
 import { RotateControl } from './threeSystem/RotateControl';
+import { ResizeControl } from './threeSystem/ResizeControl';
 import { RenderLayer } from './renderLayer';
 import { GeoBase } from './geo/GeoBase';
 
@@ -30,9 +32,11 @@ export class ThreeLayer {
   width: number;
   height: number;
   rotateCon: RotateControl;
+  resizeCon:ResizeControl;
   baseLayer: RenderLayer;
   geoBase!: GeoBase;
   trackballObj:TrackballObj
+  axesHelper: AxesHelper;
   //  uiCanvasCtx: HTMLCanvasElement;
   constructor(
     canvas: OffscreenCanvas | HTMLCanvasElement,
@@ -50,8 +54,13 @@ export class ThreeLayer {
     this.width = width;
     this.height = height;
     this.rotateCon = new RotateControl(this);
+    this.resizeCon = new ResizeControl(this)
     this.baseLayer = baseRenderLayer;
     this.trackballObj = new TrackballObj({camera:this.camera,target:new Vector3(0,0,0),proxyElementEvent:canvas,floorPlank:this.floorPlank,layer:this})
+
+    this.axesHelper = new AxesHelper(10);
+    this.scene.add( this.axesHelper)
+
   }
 
   render() {
