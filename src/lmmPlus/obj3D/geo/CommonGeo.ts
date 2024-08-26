@@ -42,7 +42,7 @@ class CommonGeo {
    * @param {String} color css 样式的格式  #fff ...
    * @param {String} type 当前的指针模式  move down
    */
-  fillColorStyle(materialIndex: number, color: string, type: string) {
+  fillColorStyle(materialIndex: number, color: string, type?: string) {
     if (!(this.realGeo.material instanceof Array)) return;
     // 如果传入 none 表示时清空颜色
     if (color === 'none') {

@@ -56,6 +56,8 @@ export class RenderLayer extends Receiver {
       case eventType.resize3D:
         this.renderLayer.resizeCon.onPointerdown(event, customEvent);
         break;
+      case eventType.fill3D:
+        this.renderLayer.fillCon.onPointerdown(event, customEvent);
     }
   }
 
@@ -70,6 +72,8 @@ export class RenderLayer extends Receiver {
       case eventType.resize3D:
         this.renderLayer.resizeCon.onPointermove(event, customEvent);
         break;
+      case eventType.fill3D:
+        this.renderLayer.fillCon.onPointermove(event, customEvent);
     }
   }
 
@@ -84,6 +88,8 @@ export class RenderLayer extends Receiver {
       case eventType.resize3D:
         this.renderLayer.resizeCon.onPointerup(event, customEvent);
         break;
+      case eventType.fill3D:
+        this.renderLayer.fillCon.onPointerup(event, customEvent);
     }
   }
 

@@ -157,7 +157,7 @@ export class GeoBase extends Receiver {
     this.originGroup && this.renderLayer.scene.add(this.originGroup);
     // this.originGroup.add(this.renderLayer.resizeCon.resizeGroup);
     this.renderLayer.resizeCon.registerControl(this.geoObj)
-    this.renderLayer.baseLayer.changeMode(eventType.resize3D);
+    this.renderLayer.baseLayer.changeMode(eventType.fill3D);
     this.removeObj();
   }
 
@@ -171,6 +171,19 @@ export class GeoBase extends Receiver {
   }
   resizeGeoEnd(){
     this.geoObj.saveOutSize()
+  }
+
+  /**
+   * fillColor 修改颜色 公共的方法，每个几何体的逻辑都一样，所以写在这一层
+   * @param {*} index     面的索引
+   * @param {*} color
+   * @param {*} pointerType  move | down
+   */
+  fillGeo(index:number, color:string, pointerType?:string) {
+    this.geoObj.fillColorStyle(index, color, pointerType);
+  }
+  clearColorGeo(){
+    this.geoObj.clearColor();
   }
   // 销毁内存中的对象
   destroyObj(obj: any) {
