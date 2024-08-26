@@ -11,6 +11,9 @@
   },
   "dependencies": {
     "@types/three": "^0.167.1",
+    "css-loader": "^7.1.2",
+    "normalize.css": "^8.0.1",
+    "style-loader": "^4.0.0",
     "three": "^0.167.1",
     "vue": "^3.4.21",
     "vue-router": "^4.3.3"

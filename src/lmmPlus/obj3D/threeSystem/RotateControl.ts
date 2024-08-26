@@ -21,6 +21,7 @@ import { converCoordinateTo3D, getObjByPoint } from '../utils';
 import { Receiver } from '../../driver/Receiver';
 import { ThreeLayer } from '../ThreeLayer';
 import { customEvent } from '../../driver';
+import { CommonGeo } from '../geo/CommonGeo';
 
 enum rotateType {
   trackball = 'trackball',
@@ -165,7 +166,6 @@ class RotateControl extends Receiver {
         this.rotateMode = rotateType.none;
       }
     } else {
-      console.log('move 模式');
       this.rotateMode = rotateType.none;
     }
   }
@@ -184,6 +184,17 @@ class RotateControl extends Receiver {
   onPointerup(event: PointerEvent, customEvent: customEvent): void {
     this.rotateMode = rotateType.none;
     this.renderLayer.trackballObj.pointerup();
+  }
+
+  registerControl(geoBase:CommonGeo){
+    const {x,y,z} = geoBase.originGroup?.scale as Vector3
+    this.controler.scale.set(1/x,1/y,1/z)
+    geoBase.originGroup?.add(this.controler)
+  }
+  destroyControl(geoBase:CommonGeo){
+    geoBase.originGroup?.remove(this.controler)
+    this.controler.scale.set(1,1,1)
+
   }
 }
 

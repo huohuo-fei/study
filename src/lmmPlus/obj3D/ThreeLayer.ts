@@ -15,7 +15,7 @@ import createLight from './threeSystem/light';
 import createRenderer from './threeSystem/render';
 import createScene from './threeSystem/scene';
 import createFloorPlank from './threeSystem/floorPlank';
-import TrackballObj from './threeSystem/TrackballObj'
+import TrackballObj from './threeSystem/TrackballObj';
 import { RotateControl } from './threeSystem/RotateControl';
 import { ResizeControl } from './threeSystem/ResizeControl';
 import { FillControl } from './threeSystem/FillControl';
@@ -34,19 +34,21 @@ export class ThreeLayer {
   width: number;
   height: number;
   rotateCon: RotateControl;
-  resizeCon:ResizeControl;
-  fillCon:FillControl
-  drawCon:DrawControl
+  resizeCon: ResizeControl;
+  fillCon: FillControl;
+  drawCon: DrawControl;
   baseLayer: RenderLayer;
   geoBase!: GeoBase;
-  trackballObj:TrackballObj
+  trackballObj: TrackballObj;
   axesHelper: AxesHelper;
+  canvas: OffscreenCanvas | HTMLCanvasElement
   //  uiCanvasCtx: HTMLCanvasElement;
   constructor(
     canvas: OffscreenCanvas | HTMLCanvasElement,
     baseRenderLayer: RenderLayer
   ) {
     this.threeRender = createRenderer(canvas);
+    this.canvas = canvas
     this.scene = createScene();
     this.camera = createCamera(canvas);
     this.light = createLight();
@@ -58,15 +60,20 @@ export class ThreeLayer {
     this.width = width;
     this.height = height;
     this.rotateCon = new RotateControl(this);
-    this.resizeCon = new ResizeControl(this)
-    this.fillCon = new FillControl(this)
-    this.drawCon = new DrawControl(this)
+    this.resizeCon = new ResizeControl(this);
+    this.fillCon = new FillControl(this);
+    this.drawCon = new DrawControl(this);
     this.baseLayer = baseRenderLayer;
-    this.trackballObj = new TrackballObj({camera:this.camera,target:new Vector3(0,0,0),proxyElementEvent:canvas,floorPlank:this.floorPlank,layer:this})
+    this.trackballObj = new TrackballObj({
+      camera: this.camera,
+      target: new Vector3(0, 0, 0),
+      proxyElementEvent: canvas,
+      floorPlank: this.floorPlank,
+      layer: this,
+    });
 
     this.axesHelper = new AxesHelper(10);
-    this.scene.add( this.axesHelper)
-
+    this.scene.add(this.axesHelper);
   }
 
   render() {

@@ -20,58 +20,63 @@ class Driver {
     window.addEventListener('pointerup', this.dPointerUp.bind(this));
   }
   dPointerDown(event: PointerEvent) {
-    for(const recriver of this.listener){
-     const {rawEvent,customEvent} =  this.converEvent(event,recriver)
-      recriver.onPointerdown(rawEvent,customEvent)
+    for (const recriver of this.listener) {
+      const dom = recriver.getDomElement();
+      if (dom !== event.target) return;
+      const { rawEvent, customEvent } = this.converEvent(event, recriver);
+      recriver.onPointerdown(rawEvent, customEvent);
     }
   }
   dPointerMove(event: PointerEvent) {
-    for(const recriver of this.listener){
-     const {rawEvent,customEvent} =  this.converEvent(event,recriver)
-      recriver.onPointermove(rawEvent,customEvent)
+    for (const recriver of this.listener) {
+      const dom = recriver.getDomElement();
+      if (dom !== event.target) return;
+      const { rawEvent, customEvent } = this.converEvent(event, recriver);
+      recriver.onPointermove(rawEvent, customEvent);
     }
   }
   dPointerUp(event: PointerEvent) {
-    for(const recriver of this.listener){
-      const {rawEvent,customEvent} =  this.converEvent(event,recriver)
-      recriver.onPointerup(rawEvent,customEvent)
+    for (const recriver of this.listener) {
+      const dom = recriver.getDomElement();
+      if (dom !== event.target) return;
+      const { rawEvent, customEvent } = this.converEvent(event, recriver);
+      recriver.onPointerup(rawEvent, customEvent);
     }
   }
 
-  converEvent(rawEvent:PointerEvent,recriver:Receiver){
-    const dom = recriver.getDomElement()
-    const {clientX,clientY,pointerId} = rawEvent
+  converEvent(rawEvent: PointerEvent, recriver: Receiver) {
+    const dom = recriver.getDomElement();
+    const { clientX, clientY, pointerId } = rawEvent;
     const customEvent = {
-      x:clientX,
-      y:clientY,
+      x: clientX,
+      y: clientY,
       pointerId,
-      eventType:recriver.getMode()
-    }
-    if(dom){
-      const {x,y} = dom.getBoundingClientRect()
-      customEvent.x = clientX-x
-      customEvent.y= clientY-y
+      eventType: recriver.getMode(),
+    };
+    if (dom) {
+      const { x, y } = dom.getBoundingClientRect();
+      customEvent.x = clientX - x;
+      customEvent.y = clientY - y;
     }
 
-    return {customEvent,rawEvent}
-
+    return { customEvent, rawEvent };
   }
 }
 
-export enum eventType{
-  draw='draw',
-  select='select',
-  draw3D='draw3D',
-  rotate3D='rotate3D',
-  fill3D='fill3D',
-  resize3D='resize3D'
+export enum eventType {
+  draw = 'draw',
+  select = 'select',
+  draw3D = 'draw3D',
+  rotate3D = 'rotate3D',
+  fill3D = 'fill3D',
+  resize3D = 'resize3D',
 }
 
-export interface customEvent{
-  x:number
-  y:number
-  pointerId:number
-  eventType:eventType
+export interface customEvent {
+  x: number;
+  y: number;
+  pointerId: number;
+  eventType: eventType;
 }
 
-export const driver = new Driver()
+export const driver = new Driver();

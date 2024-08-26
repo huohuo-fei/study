@@ -125,6 +125,9 @@ class CommonGeo {
   stretchBottomThree(height?: number) {}
   updateOriginGeo(resizeDir: string, distance: number){}
   saveOutSize(){}
+  getMinSize():number[][]{
+    return []
+  }
 }
 
 export { CommonGeo };

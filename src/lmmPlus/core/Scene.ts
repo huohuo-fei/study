@@ -10,7 +10,7 @@ type SceneType = {
 };
 // 管理着编辑器中所有的元素
 export class Scene extends Group {
-  private _canvas = document.createElement('canvas');
+  private _canvas:HTMLCanvasElement = document.createElement('canvas');
   ctx: CanvasRenderingContext2D = this._canvas.getContext(
     '2d'
   ) as CanvasRenderingContext2D;

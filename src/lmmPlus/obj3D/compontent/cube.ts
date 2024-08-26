@@ -17,6 +17,7 @@ import {
   LineDashedMaterial,
   TypedArray,
   Material,
+  Box3,
 } from 'three';
 import { DASH_SIZE, GAP_SIZE } from './const/boxConst';
 import { CommonGeo } from '../geo/CommonGeo';
@@ -51,6 +52,8 @@ export class Cube extends CommonGeo {
   originTotalPoint: number[] | null = null;
   // 有正负的高度
   dirHeight: number = 0;
+    // 初始状态的最小包围盒
+    minBoxPointArr: Vector3[] = [];
 
   drawBottom(startPoint: Vector3, endPoint: Vector3) {
     this.downPoint.copy(startPoint);
@@ -587,7 +590,6 @@ export class Cube extends CommonGeo {
       }
     }
   }
-
   // 将缩放量累积起来，下次的变换 基于之前缩放的和
   saveOutSize() {
     const scale = this.originGroup!.scale;
@@ -595,4 +597,55 @@ export class Cube extends CommonGeo {
     this.totalScaleY = scale.y;
     this.totalScaleZ = scale.z;
   }
+
+  getMinSize() {
+    const points = [];
+
+    if (this.minBoxPointArr.length === 0) {
+      const box3 = new Box3();
+      box3.expandByObject(this.originGroup!); // 计算模型包围盒
+      const { min, max } = box3;
+
+      // 计算 立方体的八个顶点 webgl 坐标下   -- 逆时针旋转
+      const p0 = new Vector3().copy(min);
+      const p7 = new Vector3().copy(max);
+      const p1 = new Vector3(min.x, min.y, max.z);
+      const p2 = new Vector3(max.x, min.y, max.z);
+      const p3 = new Vector3(max.x, min.y, min.z);
+      const p4 = new Vector3(max.x, max.y, min.z);
+      const p5 = new Vector3(min.x, max.y, min.z);
+      const p6 = new Vector3(min.x, max.y, max.z);
+      points.push(...p0, ...p1, ...p2, ...p3, ...p4, ...p5, ...p6, ...p7);
+      this.minBoxPointArr = [p0, p1, p2, p3, p4, p5, p6, p7];
+    } else {
+      for (let i = 0; i < this.minBoxPointArr.length; i++) {
+        const newPoint = this.minBoxPointArr[i]
+          .clone()
+          .applyMatrix4(this.originGroup!.matrixWorld);
+        points.push(...newPoint);
+      }
+    }
+
+    return [points];
+  }
+    // 根据最新的矩阵计算 最新的最小包围盒信息
+    getNewMinBoxPoint() {
+      const material = new LineBasicMaterial({
+        color: 0xff0000,
+      });
+  
+      const points = [];
+  
+      for (let i = 0; i < this.minBoxPointArr.length; i++) {
+        const newPoint = this.minBoxPointArr[i]
+          .clone()
+          .applyMatrix4(this.originGroup!.matrixWorld);
+        points.push(newPoint);
+      }
+  
+      const geometry = new BufferGeometry().setFromPoints(points);
+  
+      const line = new Line(geometry, material);
+      return line;
+    }
 }

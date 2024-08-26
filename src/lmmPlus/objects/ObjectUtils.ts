@@ -66,4 +66,13 @@ function SelectObj(scene: Scene) {
 		return null
 	}
 }
-export { crtPathByMatrix, imgLoadPromises, imgLoadPromise ,crtPath,SelectObj};
+
+function selectObjByScene(objGroup: Object2D[], mp: Vector2,scene:Scene): Object2D | null{
+	for (let obj of [...objGroup].reverse()) {
+    if (scene.isPointInObj(obj, mp, obj.pvmMatrix)) {
+      return obj
+    }
+  }
+  return null
+}
+export { crtPathByMatrix, imgLoadPromises, imgLoadPromise ,crtPath,SelectObj,selectObjByScene};

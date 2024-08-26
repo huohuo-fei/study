@@ -34,6 +34,14 @@ export function converCoordinateTo3D(
   return [x, y];
 }
 
+export function threeToCanvas(webglPoint: Vector3, canvasW: number, canvasH: number) {
+  const [x, y] = [
+    ((webglPoint.x + 1) / 2) * canvasW,
+    (-(webglPoint.y - 1) / 2) * canvasH,
+  ];
+  return [x, y];
+}
+
 // 获取鼠标点和  平面的焦点
 /**
  *
@@ -120,3 +128,92 @@ export function destroyObj(obj: any) {
     }
   });
 }
+
+export const converCanvas = (
+  circlePointsArr: any,
+  camera: OrthographicCamera,
+  canvas: OffscreenCanvas | HTMLCanvasElement
+)=> {
+  const points = [];
+  // 对传来的数据做双重循环 [[],[],[]],每一个数组 都是一个不同类型的点的集合
+  for (let i = 0; i < circlePointsArr.length; i++) {
+    for (let j = 0; j < circlePointsArr[i].length; j += 3) {
+      const point = new Vector3(
+        circlePointsArr[i][j],
+        circlePointsArr[i][j + 1],
+        circlePointsArr[i][j + 2]
+      );
+      const standardVec = point.project(camera);
+      // 需要将 NDC 尺寸的坐标 转为 canvas尺寸下的坐标  -- 屏幕坐标
+      const [screenX, screenY] = threeToCanvas(
+        standardVec,
+        canvas.width,
+        canvas.height
+      );
+      points.push([screenX, screenY]);
+    }
+  }
+  return cicleMinBox(points);
+}
+
+function cicleMinBox(pointArr: any) {
+  // 根据传入的坐标，记录四个值：minX minY maxX maxY
+  let minX = 0;
+  let minY = 0;
+  let maxX = 0;
+  let maxY = 0;
+
+  for (let i = 0; i < pointArr.length; i++) {
+    const [x, y] = pointArr[i];
+    if (i === 0) {
+      minX = x;
+      maxX = x;
+      minY = y;
+      maxY = y;
+      continue;
+    }
+    if (x < minX) {
+      minX = x;
+    }
+    if (x > maxX) {
+      maxX = x;
+    }
+
+    if (y < minY) {
+      minY = y;
+    }
+    if (y > maxY) {
+      maxY = y;
+    }
+  }
+
+  return [minX, minY, maxX, maxY];
+}
+
+  /**
+   * 根据包围盒信息 生成 canvas 副本，并对当前几何体数据做保存
+   */
+export const createCacheCanvas = (minX: number, minY: number, maxX: number, maxY: number,canvas:HTMLCanvasElement |OffscreenCanvas) => {
+    const OFFSET_LITTLE = 0;
+    // 计算位置 和大小 这里添加一个偏移量 扩大最小包围盒
+    const [newMinX, newMinY, newMaxX, newMaxY] = [
+      minX - OFFSET_LITTLE,
+      minY - OFFSET_LITTLE,
+      maxX + OFFSET_LITTLE,
+      maxY + OFFSET_LITTLE,
+    ];
+
+    const [width, height] = [newMaxX - newMinX, newMaxY - newMinY];
+    return new Promise<ImageBitmap>((resolve, reject) => {
+      // 向 3D 画布截取指定内容时 需要注意：3D画布考虑了像素比的问题，所以，截取范围和坐标需要 * dip
+      createImageBitmap(
+        canvas,
+        newMinX,
+        newMinY,
+        width,
+        height
+      ).then((imageBitmap) => {
+        resolve(imageBitmap);
+      });
+    });
+  }

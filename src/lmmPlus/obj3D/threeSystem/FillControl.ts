@@ -44,6 +44,9 @@ class FillControl extends Receiver {
       this.renderLayer.geoBase.clearColorGeo();
     }
   }
+  changeColor(color:string){
+    this.fillColor = color
+  }
 }
 
 export { FillControl };

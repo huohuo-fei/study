@@ -4,7 +4,7 @@ import { ThreeLayer } from '../ThreeLayer';
 import { customEvent } from '../../driver';
 import { Group, Points, Vector2, Vector3 } from 'three';
 import { createPoint } from '../utils/point';
-class DrawControl extends Receiver {
+ class DrawControl extends Receiver {
   renderLayer: ThreeLayer;
   // 是否处于绘制模式  -- 只有在绘制底部线框以及拉伸高度时，为true
   isDraw: boolean = false;

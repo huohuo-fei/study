@@ -1,6 +1,7 @@
 import { Receiver } from '../driver/Receiver';
 import { EventDispatcher } from '../core/EventDispatcher';
 import { ThreeLayer } from './ThreeLayer';
+import { CanvasDrawLayer } from './CanvasDrawLayer';
 import { GeoBase } from './geo/GeoBase';
 import { customEvent } from '../driver';
 import { eventType } from '../driver';
@@ -12,11 +13,13 @@ export enum GeoType {
   cube = 'cube',
 }
 export class RenderLayer extends Receiver {
-  renderLayer: ThreeLayer;
+  threeLayer: ThreeLayer;
+  drawLayer!: CanvasDrawLayer;
   type: GeoType = GeoType.cube;
   geoBase?: GeoBase;
   uiCanvas: HTMLCanvasElement;
   topCanvas: HTMLCanvasElement;
+  topCanvas2: HTMLCanvasElement;
   bgCanvas: HTMLCanvasElement;
   width: number;
   height: number;
@@ -30,73 +33,96 @@ export class RenderLayer extends Receiver {
     this.uiCanvas = uiCanvas;
     this.bgCanvas = bgCanvas;
     this.topCanvas = document.createElement('canvas');
+    this.topCanvas2 = document.createElement('canvas');
     const { width, height } = uiCanvas;
     this.width = width;
     this.height = height;
     this.topCanvas.width = width;
     this.topCanvas.height = height;
-    // const ctx = this.topCanvas
-    this.renderLayer = new ThreeLayer(this.topCanvas, this);
-    this.geoBase = new GeoBase(this.renderLayer);
-    this.renderLayer.geoBase = this.geoBase;
+    this.topCanvas2.width = width;
+    this.topCanvas2.height = height;
+    this.threeLayer = new ThreeLayer(this.topCanvas, this);
+    this.geoBase = new GeoBase(this.threeLayer);
+    this.threeLayer.geoBase = this.geoBase;
     this.uiCtx = this.uiCanvas.getContext('2d');
     this.bgCtx = this.bgCanvas.getContext('2d');
-    this.loopRender();
     this.renderBg();
+    this.registerEvent();
+    this.initDrawLayer();
+    this.loopRender();
+  }
+
+  // 2D 画布
+  initDrawLayer() {
+    this.drawLayer = new CanvasDrawLayer(this.topCanvas2, this);
   }
 
   onPointerdown(event: PointerEvent, customEvent: customEvent) {
     switch (customEvent.eventType) {
       case eventType.draw3D:
-        this.renderLayer.drawCon.onPointerdown(event, customEvent);
+        this.threeLayer.drawCon.onPointerdown(event, customEvent);
         break;
       case eventType.rotate3D:
-        this.renderLayer.rotateCon.onPointerdown(event, customEvent);
+        this.threeLayer.rotateCon.onPointerdown(event, customEvent);
         break;
       case eventType.resize3D:
-        this.renderLayer.resizeCon.onPointerdown(event, customEvent);
+        this.threeLayer.resizeCon.onPointerdown(event, customEvent);
         break;
       case eventType.fill3D:
-        this.renderLayer.fillCon.onPointerdown(event, customEvent);
+        this.threeLayer.fillCon.onPointerdown(event, customEvent);
+        break;
+      case eventType.select:
+        this.drawLayer.onPointerdown(event, customEvent);
     }
   }
 
   onPointermove(event: PointerEvent, customEvent: customEvent): void {
     switch (customEvent.eventType) {
       case eventType.draw3D:
-        this.renderLayer.drawCon.onPointermove(event, customEvent);
+        this.threeLayer.drawCon.onPointermove(event, customEvent);
         break;
       case eventType.rotate3D:
-        this.renderLayer.rotateCon.onPointermove(event, customEvent);
+        this.threeLayer.rotateCon.onPointermove(event, customEvent);
         break;
       case eventType.resize3D:
-        this.renderLayer.resizeCon.onPointermove(event, customEvent);
+        this.threeLayer.resizeCon.onPointermove(event, customEvent);
         break;
       case eventType.fill3D:
-        this.renderLayer.fillCon.onPointermove(event, customEvent);
+        this.threeLayer.fillCon.onPointermove(event, customEvent);
+        break;
+      case eventType.select:
+        this.drawLayer.onPointermove(event, customEvent);
     }
   }
 
   onPointerup(event: PointerEvent, customEvent: customEvent): void {
     switch (customEvent.eventType) {
       case eventType.draw3D:
-        this.renderLayer.drawCon.onPointerup(event, customEvent);
+        this.threeLayer.drawCon.onPointerup(event, customEvent);
         break;
       case eventType.rotate3D:
-        this.renderLayer.rotateCon.onPointerup(event, customEvent);
+        this.threeLayer.rotateCon.onPointerup(event, customEvent);
         break;
       case eventType.resize3D:
-        this.renderLayer.resizeCon.onPointerup(event, customEvent);
+        this.threeLayer.resizeCon.onPointerup(event, customEvent);
         break;
       case eventType.fill3D:
-        this.renderLayer.fillCon.onPointerup(event, customEvent);
+        this.threeLayer.fillCon.onPointerup(event, customEvent);
+        break;
+      case eventType.select:
+        this.drawLayer.onPointerup(event, customEvent);
     }
   }
 
   renderDraw() {
-    this.renderLayer.render();
     this.uiCtx?.clearRect(0, 0, this.width, this.height);
-    this.uiCtx?.drawImage(this.topCanvas, 0, 0);
+    if (this.eventType === eventType.select) {
+      this.drawLayer.render();
+      this.uiCtx?.drawImage(this.topCanvas2, 0, 0);
+    } else {
+      this.threeLayer.render();
+      this.uiCtx?.drawImage(this.topCanvas, 0, 0);
+    }
   }
 
   renderBg() {
@@ -119,7 +145,26 @@ export class RenderLayer extends Receiver {
   changeMode(eventType: eventType) {
     this.eventType = eventType;
   }
+
   getMode() {
     return this.eventType;
+  }
+
+  setMode(mode: eventType) {
+    this.eventType = mode;
+  }
+
+  registerEvent() {
+    this.addEventListener('switchMode', (event) => {
+      if (event.mode) {
+        this.setMode(event.mode);
+        this.geoBase?.switchControl(event.mode);
+      }
+    });
+    this.addEventListener('changeFillColor', (event) => {
+      if (event.color) {
+        this.threeLayer.fillCon.changeColor(event.color);
+      }
+    });
   }
 }

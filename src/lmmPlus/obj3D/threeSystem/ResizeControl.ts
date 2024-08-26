@@ -158,7 +158,7 @@ class ResizeControl extends Receiver {
 
   /** 根据传入的几何体尺寸 生成并挂载 resize 控制器 */
   registerControl(obj: CommonGeo) {
-    const { width, height, depth } = obj;
+    const { width, height, depth,totalScaleX,totalScaleY,totalScaleZ } = obj;
     this.w = width;
     this.h = height;
     this.d = depth;
@@ -166,6 +166,13 @@ class ResizeControl extends Receiver {
     this.lineMesh && this.resizeGroup.add(this.lineMesh);
     this.resizeGroup.renderOrder = TOP_RENDER_ORDER + 1;
     obj.originGroup?.add(this.resizeGroup);
+
+    // 获取物体最新的缩放比 更新
+    this.totalScaleX = totalScaleX;
+    this.totalScaleY = totalScaleY;
+    this.totalScaleZ = totalScaleZ;
+    this.updateSize(resizeDir.right,0)
+    this.updateSize(resizeDir.front,0)
   }
 
   /** 销毁指定对象的 控制器 */
@@ -174,6 +181,9 @@ class ResizeControl extends Receiver {
     this.lineMesh && this.resizeGroup.remove(this.lineMesh);
     this.destoryMesh();
     this.lineMesh = null;
+    this.totalScaleX = 1;
+    this.totalScaleY = 1;
+    this.totalScaleZ = 1;
   }
 
   onPointerdown(event: PointerEvent, customEvent: customEvent): void {
@@ -281,21 +291,45 @@ class ResizeControl extends Receiver {
     switch (dir) {
       case resizeDir.up:
         const scaleY = totalScaleY + distance / this.h;
-        this.circle_up.scale.set(1/totalScaleX, 1 / scaleY, 1/totalScaleZ);
-        this.circle_right.scale.set(1/totalScaleX, 1 / scaleY, 1/totalScaleZ);
-        this.circle_front.scale.set(1/totalScaleX, 1 / scaleY, 1/totalScaleZ);
+        this.circle_up.scale.set(1 / totalScaleX, 1 / scaleY, 1 / totalScaleZ);
+        this.circle_right.scale.set(
+          1 / totalScaleX,
+          1 / scaleY,
+          1 / totalScaleZ
+        );
+        this.circle_front.scale.set(
+          1 / totalScaleX,
+          1 / scaleY,
+          1 / totalScaleZ
+        );
         break;
       case resizeDir.right:
         const scaleX = totalScaleX + distance / this.w;
-        this.circle_up.scale.set(1 / scaleX, 1/totalScaleY,1/ totalScaleZ);
-        this.circle_right.scale.set(1 / scaleX,1/ totalScaleY, 1/totalScaleZ);
-        this.circle_front.scale.set(1 / scaleX,1/ totalScaleY,1/ totalScaleZ);
+        this.circle_up.scale.set(1 / scaleX, 1 / totalScaleY, 1 / totalScaleZ);
+        this.circle_right.scale.set(
+          1 / scaleX,
+          1 / totalScaleY,
+          1 / totalScaleZ
+        );
+        this.circle_front.scale.set(
+          1 / scaleX,
+          1 / totalScaleY,
+          1 / totalScaleZ
+        );
         break;
       case resizeDir.front:
         const scaleZ = totalScaleZ + distance / this.d;
-        this.circle_up.scale.set(1/totalScaleX,1/ totalScaleY, 1 / scaleZ);
-        this.circle_right.scale.set(1/totalScaleX, 1/totalScaleY, 1 / scaleZ);
-        this.circle_front.scale.set(1/totalScaleX,1/ totalScaleY, 1 / scaleZ);
+        this.circle_up.scale.set(1 / totalScaleX, 1 / totalScaleY, 1 / scaleZ);
+        this.circle_right.scale.set(
+          1 / totalScaleX,
+          1 / totalScaleY,
+          1 / scaleZ
+        );
+        this.circle_front.scale.set(
+          1 / totalScaleX,
+          1 / totalScaleY,
+          1 / scaleZ
+        );
         break;
     }
   }
@@ -312,18 +346,18 @@ class ResizeControl extends Receiver {
     switch (dir) {
       case resizeDir.up:
         const scaleY = totalScaleY + distance / this.h;
-        this.cylinderRight.scale.set(1 / scaleY,1, 1/totalScaleZ);
+        this.cylinderRight.scale.set(1 / scaleY, 1, 1 / totalScaleZ);
         this.cylinderFront.scale.set(1 / totalScaleX, 1, 1 / scaleY);
         break;
       case resizeDir.right:
         const scaleX = totalScaleX + distance / this.w;
-        this.cylinderUp.scale.set(1 / scaleX, 1, 1/totalScaleZ);
-        this.cylinderFront.scale.set(1 / scaleX, 1, 1/totalScaleY);
+        this.cylinderUp.scale.set(1 / scaleX, 1, 1 / totalScaleZ);
+        this.cylinderFront.scale.set(1 / scaleX, 1, 1 / totalScaleY);
         break;
       case resizeDir.front:
         const scaleZ = totalScaleZ + distance / this.d;
-        this.cylinderRight.scale.set(1/totalScaleY, 1, 1 / scaleZ);
-        this.cylinderUp.scale.set(1/totalScaleX, 1, 1 / scaleZ);
+        this.cylinderRight.scale.set(1 / totalScaleY, 1, 1 / scaleZ);
+        this.cylinderUp.scale.set(1 / totalScaleX, 1, 1 / scaleZ);
     }
   }
 
@@ -332,9 +366,9 @@ class ResizeControl extends Receiver {
    * 由于是控制多个几何体的缩放，所以要记录每个几何体的缩放信息。。。
    */
   unifyScale() {
-    this.totalScaleX = this.renderLayer.geoBase.geoObj.totalScaleX
-    this.totalScaleY =  this.renderLayer.geoBase.geoObj.totalScaleY
-    this.totalScaleZ = this.renderLayer.geoBase.geoObj.totalScaleZ
+    this.totalScaleX = this.renderLayer.geoBase.geoObj.totalScaleX;
+    this.totalScaleY = this.renderLayer.geoBase.geoObj.totalScaleY;
+    this.totalScaleZ = this.renderLayer.geoBase.geoObj.totalScaleZ;
   }
 
   // 根据传来的值 再次生成resize 控制器
