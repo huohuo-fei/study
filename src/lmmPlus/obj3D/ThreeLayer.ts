@@ -19,6 +19,7 @@ import TrackballObj from './threeSystem/TrackballObj'
 import { RotateControl } from './threeSystem/RotateControl';
 import { ResizeControl } from './threeSystem/ResizeControl';
 import { FillControl } from './threeSystem/FillControl';
+import { DrawControl } from './threeSystem/DrawControl';
 import { RenderLayer } from './renderLayer';
 import { GeoBase } from './geo/GeoBase';
 
@@ -35,6 +36,7 @@ export class ThreeLayer {
   rotateCon: RotateControl;
   resizeCon:ResizeControl;
   fillCon:FillControl
+  drawCon:DrawControl
   baseLayer: RenderLayer;
   geoBase!: GeoBase;
   trackballObj:TrackballObj
@@ -58,6 +60,7 @@ export class ThreeLayer {
     this.rotateCon = new RotateControl(this);
     this.resizeCon = new ResizeControl(this)
     this.fillCon = new FillControl(this)
+    this.drawCon = new DrawControl(this)
     this.baseLayer = baseRenderLayer;
     this.trackballObj = new TrackballObj({camera:this.camera,target:new Vector3(0,0,0),proxyElementEvent:canvas,floorPlank:this.floorPlank,layer:this})
 

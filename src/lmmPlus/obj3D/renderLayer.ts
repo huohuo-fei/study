@@ -48,7 +48,7 @@ export class RenderLayer extends Receiver {
   onPointerdown(event: PointerEvent, customEvent: customEvent) {
     switch (customEvent.eventType) {
       case eventType.draw3D:
-        this.geoBase?.onPointerdown(event, customEvent);
+        this.renderLayer.drawCon.onPointerdown(event, customEvent);
         break;
       case eventType.rotate3D:
         this.renderLayer.rotateCon.onPointerdown(event, customEvent);
@@ -64,7 +64,7 @@ export class RenderLayer extends Receiver {
   onPointermove(event: PointerEvent, customEvent: customEvent): void {
     switch (customEvent.eventType) {
       case eventType.draw3D:
-        this.geoBase?.onPointermove(event, customEvent);
+        this.renderLayer.drawCon.onPointermove(event, customEvent);
         break;
       case eventType.rotate3D:
         this.renderLayer.rotateCon.onPointermove(event, customEvent);
@@ -80,7 +80,7 @@ export class RenderLayer extends Receiver {
   onPointerup(event: PointerEvent, customEvent: customEvent): void {
     switch (customEvent.eventType) {
       case eventType.draw3D:
-        this.geoBase?.onPointerup(event, customEvent);
+        this.renderLayer.drawCon.onPointerup(event, customEvent);
         break;
       case eventType.rotate3D:
         this.renderLayer.rotateCon.onPointerup(event, customEvent);
