@@ -73,7 +73,7 @@ export class ThreeLayer {
     });
 
     this.axesHelper = new AxesHelper(10);
-    this.scene.add(this.axesHelper);
+    // this.scene.add(this.axesHelper);
   }
 
   render() {

@@ -91,13 +91,16 @@ export class CanvasDrawLayer extends Receiver {
     this.transformControler.pointerup();
   }
 
-  addImg(imgResource:HTMLCanvasElement|HTMLImageElement){
+  addImg(imgResource:HTMLCanvasElement|HTMLImageElement,minBox:number[]){
+    const {width,height} = this.canvas
+    const [x,y] = [-width/2 + minBox[0],-height/2 + minBox[1]]
+    this.group.clear()
     const size = new Vector2(imgResource.width, imgResource.height)
     const img = new Img2D({
       image: imgResource,
       // 模型矩阵
-      position: new Vector2(0, 0),
-      offset: new Vector2(-size.x / 2, -size.y / 2),
+      position: new Vector2(x,y),
+      offset: new Vector2(0,0),
       name: 'img',
       size,
     });

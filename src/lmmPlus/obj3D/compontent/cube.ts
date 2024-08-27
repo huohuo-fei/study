@@ -233,6 +233,7 @@ export class Cube extends CommonGeo {
     this.originGroup.add(this.realGeo);
     this.originGroup.add(lineMesh);
     this.originGroup.name = 'cubeBox';
+    this.getMinSize();
     this.transformGeo(this.originGroup);
     return this.originGroup;
   }
@@ -625,7 +626,6 @@ export class Cube extends CommonGeo {
         points.push(...newPoint);
       }
     }
-
     return [points];
   }
     // 根据最新的矩阵计算 最新的最小包围盒信息

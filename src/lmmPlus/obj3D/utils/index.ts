@@ -187,7 +187,9 @@ function cicleMinBox(pointArr: any) {
     }
   }
 
-  return [minX, minY, maxX, maxY];
+    const OFFSET_LITTLE = 2;
+
+  return [minX - OFFSET_LITTLE, minY-OFFSET_LITTLE, maxX +OFFSET_LITTLE, maxY+OFFSET_LITTLE];
 }
 
   /**

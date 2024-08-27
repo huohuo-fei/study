@@ -87,7 +87,6 @@ export class GeoBase {
 
   /** 切换控制器 */
   switchControl(mode: eventType) {
-    this.convertSnapshot()
     if(mode === eventType.rotate3D){
       this.renderLayer.resizeCon.destroyControl(this.geoObj);
       this.renderLayer.rotateCon.registerControl(this.geoObj)
@@ -120,18 +119,32 @@ export class GeoBase {
 
   /** 当前几何体失活 生成一个几何体快照 并输出一张图片 */
   convertSnapshot(){
+    this.removeControl()
     const circlePointsArr = this.geoObj.getMinSize()
     const minBox = converCanvas(circlePointsArr, this.renderLayer.camera, this.renderLayer.canvas) as [number,number,number,number]
-    
     createCacheCanvas(...minBox,this.renderLayer.canvas).then(imgBit => {
+      this.clearObj()
       const can = document.createElement('canvas')
       can.width = imgBit.width
       can.height = imgBit.height
       const ctx = can.getContext('2d')
       ctx?.drawImage(imgBit,0,0)
-      this.renderLayer.baseLayer.drawLayer.addImg(can)
+      this.renderLayer.baseLayer.drawLayer.addImg(can,minBox)
+
       this.renderLayer.baseLayer.setMode(eventType.select)
     })
+  }
 
+  // 清空数据
+  clearObj(){
+    this.renderLayer.scene.remove(this.originGroup)
+    destroyObj(this.originGroup)
+  }
+
+  // 移除控制器
+  removeControl(){
+    this.renderLayer.rotateCon.destroyControl(this.geoObj);
+    this.renderLayer.resizeCon.destroyControl(this.geoObj);
+    this.renderLayer.render()
   }
 }

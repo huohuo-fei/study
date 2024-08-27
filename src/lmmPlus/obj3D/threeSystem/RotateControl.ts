@@ -167,6 +167,7 @@ class RotateControl extends Receiver {
       }
     } else {
       this.rotateMode = rotateType.none;
+      this.renderLayer.geoBase.convertSnapshot()
     }
   }
   onPointermove(event: PointerEvent, customEvent: customEvent): void {
