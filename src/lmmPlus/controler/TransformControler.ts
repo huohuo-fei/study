@@ -7,6 +7,7 @@ import { Object2D } from '../objects/Object2D';
 import { ControlFrame, State } from './Frame';
 
 const _changeEvent = { type: 'change' };
+const beforeTransform = { type: 'beforeTransform' };
 
 /** 变换之前的暂存数据类型 */
 type TransformData = {
@@ -225,6 +226,7 @@ export class TransformControler extends Object2D {
     }
     if (controlState === 'move') {
       transformer[key](dragStart, dragEnd);
+      this.dispatchEvent({ type: 'transforme', value:dragEnd.clone().sub(dragStart) });
     } else {
       transformer[key](start2Origin, end2Origin);
     }

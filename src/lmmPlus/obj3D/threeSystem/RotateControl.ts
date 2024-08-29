@@ -52,7 +52,6 @@ class RotateControl extends Receiver {
     const sphereMaterial = new MeshBasicMaterial({
       color: 0xff00ff,
       transparent: true,
-      // depthFunc: NeverDepth,
       opacity: 0, // 设置透明度
     });
     this.sphere = new Mesh(sphereGeometry, sphereMaterial);

@@ -6,7 +6,7 @@ import { TransformControler } from '../controler/TransformControler';
 import { Img2D } from '../objects/Img';
 import { Vector2 } from '../math/Vector2';
 import { Receiver } from '../driver/Receiver';
-import { customEvent } from '../driver';
+import { customEvent, eventType } from '../driver';
 import { selectObjByScene } from '../objects/ObjectUtils';
 import { Object2D } from '../objects/Object2D';
 
@@ -20,12 +20,12 @@ export class CanvasDrawLayer extends Receiver {
   scene: Scene;
   group: Group;
   transformControler: TransformControler;
-  selectObj:Object2D | null = null
+  selectObj: Object2D | null = null;
   constructor(
     canvas: OffscreenCanvas | HTMLCanvasElement,
     baseRenderLayer: RenderLayer
   ) {
-    super()
+    super();
     this.scene = new Scene();
     this.group = new Group();
     this.transformControler = new TransformControler();
@@ -35,11 +35,23 @@ export class CanvasDrawLayer extends Receiver {
     this.height = height;
     this.baseLayer = baseRenderLayer;
     this.init();
+    this.listenEvent();
+  }
+
+  listenEvent() {
+    
+    this.transformControler.addEventListener('transforme', (event) => {
+      this.baseLayer.setMode(eventType.transform3d)
+    });
+    this.transformControler.addEventListener('beforeTransform',(event) =>{
+      // this.baseLayer.setMode(eventType.transform3d)
+      // this.baseLayer.transform.onPointerdown()
+    })
   }
   init() {
     this.scene.setOption({ canvas: this.canvas as HTMLCanvasElement });
-    this.scene.add(this.group)
-    this.scene.add(this.transformControler)
+    this.scene.add(this.group);
+    this.scene.add(this.transformControler);
   }
 
   testData() {
@@ -69,43 +81,38 @@ export class CanvasDrawLayer extends Receiver {
   }
 
   render() {
-    this.scene.render(); 
+    this.scene.render();
   }
 
   onPointerdown(event: PointerEvent, customEvent: customEvent): void {
     const mp = this.scene.clientToClip(customEvent.x, customEvent.y);
-    this.selectObj = selectObjByScene(this.group.children, mp,this.scene);
+    this.selectObj = selectObjByScene(this.group.children, mp, this.scene);
     this.transformControler.pointerdown(this.selectObj, mp);
-    console.log('down');
-    
   }
 
   onPointermove(event: PointerEvent, customEvent: customEvent): void {
     const clipMp = this.scene.clientToClip(customEvent.x, customEvent.y);
     this.transformControler.pointermove(clipMp);
-    this.selectObj = selectObjByScene(this.group.children, clipMp,this.scene);
-    
+    // this.selectObj = selectObjByScene(this.group.children, clipMp, this.scene);
   }
 
   onPointerup(event: PointerEvent, customEvent: customEvent): void {
     this.transformControler.pointerup();
   }
 
-  addImg(imgResource:HTMLCanvasElement|HTMLImageElement,minBox:number[]){
-    const {width,height} = this.canvas
-    const [x,y] = [-width/2 + minBox[0],-height/2 + minBox[1]]
-    this.group.clear()
-    const size = new Vector2(imgResource.width, imgResource.height)
+  addImg(imgResource: HTMLCanvasElement | HTMLImageElement, minBox: number[]) {
+    const { width, height } = this.canvas;
+    const [x, y] = [-width / 2 + minBox[0], -height / 2 + minBox[1]];
+    this.group.clear();
+    const size = new Vector2(imgResource.width, imgResource.height);
     const img = new Img2D({
       image: imgResource,
       // 模型矩阵
-      position: new Vector2(x,y),
-      offset: new Vector2(0,0),
+      position: new Vector2(x, y),
+      offset: new Vector2(0, 0),
       name: 'img',
       size,
     });
-    this.group.add(img)
+    this.group.add(img);
   }
-
- 
 }

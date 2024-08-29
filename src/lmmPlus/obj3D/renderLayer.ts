@@ -71,12 +71,17 @@ export class RenderLayer extends Receiver {
       case eventType.fill3D:
         this.threeLayer.fillCon.onPointerdown(event, customEvent);
         break;
-      case eventType.select:
+      case eventType.select || eventType.transform3d:
         this.drawLayer.onPointerdown(event, customEvent);
+        break
+      case  eventType.transform3d:
+        this.drawLayer.onPointerdown(event, customEvent);
+        break
     }
   }
 
   onPointermove(event: PointerEvent, customEvent: customEvent): void {
+    
     switch (customEvent.eventType) {
       case eventType.draw3D:
         this.threeLayer.drawCon.onPointermove(event, customEvent);
@@ -90,8 +95,12 @@ export class RenderLayer extends Receiver {
       case eventType.fill3D:
         this.threeLayer.fillCon.onPointermove(event, customEvent);
         break;
-      case eventType.select:
+      case eventType.select :
         this.drawLayer.onPointermove(event, customEvent);
+        break
+      case eventType.transform3d:
+        this.drawLayer.onPointermove(event, customEvent);
+
     }
   }
 
@@ -111,6 +120,10 @@ export class RenderLayer extends Receiver {
         break;
       case eventType.select:
         this.drawLayer.onPointerup(event, customEvent);
+        break
+      case eventType.transform3d:
+        this.drawLayer.onPointerup(event, customEvent);
+
     }
   }
 

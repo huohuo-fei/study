@@ -70,6 +70,7 @@ export enum eventType {
   rotate3D = 'rotate3D',
   fill3D = 'fill3D',
   resize3D = 'resize3D',
+  transform3d='transform3d'
 }
 
 export interface customEvent {

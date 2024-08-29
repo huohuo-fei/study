@@ -1,10 +1,11 @@
+import { EventDispatcher } from '../core/EventDispatcher';
 import { Matrix3 } from '../math/Matrix3';
 import { Vector2 } from '../math/Vector2';
 import { Object2D } from '../objects/Object2D';
 const pi2 = Math.PI * 2;
 
 /** 对任意Object2D对象的变换 */
-export class Object2DTransformer {
+export class Object2DTransformer extends EventDispatcher {
   /** 本地变换数据 */
   localMatrix = new Matrix3();
   localRotate = 0;
@@ -138,6 +139,9 @@ export class Object2DTransformer {
   // 自由位移
   move0(dragStart: Vector2, dragEnd: Vector2) {
     this.relativePosition.subVectors(dragEnd, dragStart)
+    this.dispatchEvent({type:'transform',trans:'move',value:dragEnd.clone().sub(dragEnd)})
+    
+    
   }
   // 正交位移-作业，留给同学们实现
   move1() {

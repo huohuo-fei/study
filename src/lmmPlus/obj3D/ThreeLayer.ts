@@ -22,6 +22,7 @@ import { FillControl } from './threeSystem/FillControl';
 import { DrawControl } from './threeSystem/DrawControl';
 import { RenderLayer } from './renderLayer';
 import { GeoBase } from './geo/GeoBase';
+import { TransformControl } from './threeSystem/Transform';
 
 // 文件主要处理渲染相关的逻辑
 export class ThreeLayer {
@@ -42,6 +43,7 @@ export class ThreeLayer {
   trackballObj: TrackballObj;
   axesHelper: AxesHelper;
   canvas: OffscreenCanvas | HTMLCanvasElement
+  transformControl:TransformControl
   //  uiCanvasCtx: HTMLCanvasElement;
   constructor(
     canvas: OffscreenCanvas | HTMLCanvasElement,
@@ -63,6 +65,7 @@ export class ThreeLayer {
     this.resizeCon = new ResizeControl(this);
     this.fillCon = new FillControl(this);
     this.drawCon = new DrawControl(this);
+    this.transformControl = new TransformControl(this)
     this.baseLayer = baseRenderLayer;
     this.trackballObj = new TrackballObj({
       camera: this.camera,
@@ -73,7 +76,7 @@ export class ThreeLayer {
     });
 
     this.axesHelper = new AxesHelper(10);
-    // this.scene.add(this.axesHelper);
+    this.scene.add(this.axesHelper);
   }
 
   render() {

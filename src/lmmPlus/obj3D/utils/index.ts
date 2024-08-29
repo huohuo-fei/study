@@ -144,6 +144,8 @@ export const converCanvas = (
         circlePointsArr[i][j + 2]
       );
       const standardVec = point.project(camera);
+      console.log(standardVec,'standardVec');
+      
       // 需要将 NDC 尺寸的坐标 转为 canvas尺寸下的坐标  -- 屏幕坐标
       const [screenX, screenY] = threeToCanvas(
         standardVec,
@@ -155,6 +157,29 @@ export const converCanvas = (
   }
   return cicleMinBox(points);
 }
+
+// 寻找webgl坐标下的 包围盒点位
+export const converCanvas2 = (
+  circlePointsArr: any,
+  camera: OrthographicCamera,
+  canvas: OffscreenCanvas | HTMLCanvasElement
+)=> {
+  const points = [];
+  // 对传来的数据做双重循环 [[],[],[]],每一个数组 都是一个不同类型的点的集合
+  for (let i = 0; i < circlePointsArr.length; i++) {
+    for (let j = 0; j < circlePointsArr[i].length; j += 3) {
+      const point = new Vector3(
+        circlePointsArr[i][j],
+        circlePointsArr[i][j + 1],
+        circlePointsArr[i][j + 2]
+      );
+      const standardVec = point.project(camera);
+      points.push([standardVec.x, standardVec.y]);
+    }
+  }
+  return cicleMinBox(points);
+}
+
 
 function cicleMinBox(pointArr: any) {
   // 根据传入的坐标，记录四个值：minX minY maxX maxY
@@ -187,7 +212,7 @@ function cicleMinBox(pointArr: any) {
     }
   }
 
-    const OFFSET_LITTLE = 2;
+    const OFFSET_LITTLE = 0;
 
   return [minX - OFFSET_LITTLE, minY-OFFSET_LITTLE, maxX +OFFSET_LITTLE, maxY+OFFSET_LITTLE];
 }

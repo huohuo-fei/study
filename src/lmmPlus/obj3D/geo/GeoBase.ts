@@ -1,18 +1,23 @@
 import { eventType } from '../../driver';
 import { ThreeLayer } from '../ThreeLayer';
 import { Cube } from '../compontent/cube';
-import { getPointOfFloor, destroyObj, converCanvas, createCacheCanvas } from '../utils';
+import { getPointOfFloor, destroyObj, converCanvas, createCacheCanvas, converCanvas2 } from '../utils';
 import { Group, Mesh, Vector3, Points, Quaternion } from 'three';
 import { CommonGeo } from './CommonGeo';
 import { Receiver } from '../../driver/Receiver';
 import { Vector2 } from '../../math/Vector2';
+import { createPoint } from '../utils/point';
+
+enum geoType {
+  cube='cube'
+}
 
 /**
  * 统领当前激活的几何体，保存着几何体的实例对象 ，用于分发各种对几何体的操作
  */
 export class GeoBase {
   // 当前激活的几何体  -- 后续为数组形式  支持多个几何体
-  geoObj: CommonGeo;
+  geoObj!: CommonGeo;
   // 渲染层  -- 用于获取three 相关的方法
   renderLayer: ThreeLayer;
   // 线框实例  在生成几何体后需要销毁
@@ -20,11 +25,19 @@ export class GeoBase {
   // 几何体实例 -- 后续要扩充为数组  同时有多个几何体
   originGroup!: Group;
   constructor(renderLayer: ThreeLayer) {
-    this.geoObj = new Cube(renderLayer);
     this.renderLayer = renderLayer;
   }
 
+  setGeoObj(type:geoType){
+    if(type === geoType.cube){
+      this.geoObj = new Cube(this.renderLayer);
+    }
+  }
+
   drawBottomLine(startPoint: Vector3, endPoint: Vector3) {
+    if(!this.geoObj){
+      this.setGeoObj(geoType.cube)
+    }
     const bottomLine = this.geoObj.drawBottom(startPoint, endPoint);
     if (!this.bottomLine) {
       this.renderLayer.scene.add(bottomLine!);
@@ -121,24 +134,23 @@ export class GeoBase {
   convertSnapshot(){
     this.removeControl()
     const circlePointsArr = this.geoObj.getMinSize()
-    const minBox = converCanvas(circlePointsArr, this.renderLayer.camera, this.renderLayer.canvas) as [number,number,number,number]
-    createCacheCanvas(...minBox,this.renderLayer.canvas).then(imgBit => {
-      this.clearObj()
-      const can = document.createElement('canvas')
-      can.width = imgBit.width
-      can.height = imgBit.height
-      const ctx = can.getContext('2d')
-      ctx?.drawImage(imgBit,0,0)
-      this.renderLayer.baseLayer.drawLayer.addImg(can,minBox)
+    const minBox = converCanvas2(circlePointsArr, this.renderLayer.camera, this.renderLayer.canvas)
+    console.log(minBox,'minBox');
+    
 
-      this.renderLayer.baseLayer.setMode(eventType.select)
-    })
+    // 检测两个点 与 地板的焦点 并绘制一个矩形框
+    this.renderLayer.transformControl.createLineFrame(minBox) // createRectCube
+    this.renderLayer.transformControl.createRectCube(minBox) // createRectCube
+
+
   }
 
   // 清空数据
   clearObj(){
     this.renderLayer.scene.remove(this.originGroup)
     destroyObj(this.originGroup)
+    this.geoObj = null as unknown as CommonGeo
+    this.originGroup = null as unknown as Group
   }
 
   // 移除控制器
