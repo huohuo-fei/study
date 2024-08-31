@@ -52,8 +52,8 @@ export class Cube extends CommonGeo {
   originTotalPoint: number[] | null = null;
   // 有正负的高度
   dirHeight: number = 0;
-    // 初始状态的最小包围盒
-    minBoxPointArr: Vector3[] = [];
+  // 初始状态的最小包围盒
+  minBoxPointArr: Vector3[] = [];
 
   drawBottom(startPoint: Vector3, endPoint: Vector3) {
     this.downPoint.copy(startPoint);
@@ -518,11 +518,7 @@ export class Cube extends CommonGeo {
       if (newValue < DEFAULT_STRETCH) {
         return UN_UPDATE_RESIZE_CONTROL;
       }
-      this.originGroup.scale.set(
-        totalScaleX,
-        totalScaleY,
-        newValue
-      );
+      this.originGroup.scale.set(totalScaleX, totalScaleY, newValue);
       this.setDashStyleByDir(resizeDir, newValue);
     }
   }
@@ -628,24 +624,38 @@ export class Cube extends CommonGeo {
     }
     return [points];
   }
-    // 根据最新的矩阵计算 最新的最小包围盒信息
-    getNewMinBoxPoint() {
-      const material = new LineBasicMaterial({
-        color: 0xff0000,
-      });
-  
-      const points = [];
-  
-      for (let i = 0; i < this.minBoxPointArr.length; i++) {
-        const newPoint = this.minBoxPointArr[i]
-          .clone()
-          .applyMatrix4(this.originGroup!.matrixWorld);
-        points.push(newPoint);
-      }
-  
-      const geometry = new BufferGeometry().setFromPoints(points);
-  
-      const line = new Line(geometry, material);
-      return line;
+  // 根据最新的矩阵计算 最新的最小包围盒信息
+  getNewMinBoxPoint() {
+    const material = new LineBasicMaterial({
+      color: 0xff0000,
+    });
+
+    const points = [];
+
+    for (let i = 0; i < this.minBoxPointArr.length; i++) {
+      const newPoint = this.minBoxPointArr[i]
+        .clone()
+        .applyMatrix4(this.originGroup!.matrixWorld);
+      points.push(newPoint);
     }
+
+    const geometry = new BufferGeometry().setFromPoints(points);
+
+    const line = new Line(geometry, material);
+    return line;
+  }
+
+  // 对整个几何体进行缩放
+  scaleTotalByValue(value: number) {
+    const { totalScaleX, totalScaleY, totalScaleZ } = this;
+    const newScaleX = totalScaleX + (value);
+    const newScaleY = totalScaleY + (value);
+    const newScaleZ = totalScaleZ + (value);
+
+    this.originGroup!.scale.set(newScaleX, newScaleY, newScaleZ);
+    // this.setAllDashStyle(newScaleX, newScaleY, newScaleZ);
+    // this.totalScaleX = newScaleX;
+    // this.totalScaleY = newScaleY;
+    // this.totalScaleZ = newScaleZ;
+  }
 }

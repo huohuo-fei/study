@@ -128,6 +128,7 @@ class CommonGeo {
   getMinSize():number[][]{
     return []
   }
+  scaleTotalByValue(value:number){}
 }
 
 export { CommonGeo };

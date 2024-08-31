@@ -4,9 +4,7 @@ import { Cube } from '../compontent/cube';
 import { getPointOfFloor, destroyObj, converCanvas, createCacheCanvas, converCanvas2 } from '../utils';
 import { Group, Mesh, Vector3, Points, Quaternion } from 'three';
 import { CommonGeo } from './CommonGeo';
-import { Receiver } from '../../driver/Receiver';
 import { Vector2 } from '../../math/Vector2';
-import { createPoint } from '../utils/point';
 
 enum geoType {
   cube='cube'
@@ -135,12 +133,10 @@ export class GeoBase {
     this.removeControl()
     const circlePointsArr = this.geoObj.getMinSize()
     const minBox = converCanvas2(circlePointsArr, this.renderLayer.camera, this.renderLayer.canvas)
-    console.log(minBox,'minBox');
-    
 
     // 检测两个点 与 地板的焦点 并绘制一个矩形框
-    this.renderLayer.transformControl.createLineFrame(minBox) // createRectCube
-    this.renderLayer.transformControl.createRectCube(minBox) // createRectCube
+    this.renderLayer.transformControl.initLineRect(minBox)
+    this.renderLayer.baseLayer.setMode(eventType.select)
 
 
   }
