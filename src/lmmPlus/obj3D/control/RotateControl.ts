@@ -15,7 +15,7 @@ import {
   ROTATE_R,
   ROTATE_H,
   ROTATE_BAND_OFFSET,
-} from './const';
+} from '../threeSystem/const';
 
 import { converCoordinateTo3D, getObjByPoint } from '../utils';
 import { Receiver } from '../../driver/Receiver';
@@ -166,7 +166,7 @@ class RotateControl extends Receiver {
       }
     } else {
       this.rotateMode = rotateType.none;
-      this.renderLayer.geoBase.convertSnapshot()
+      this.renderLayer.geoBase.showFrame()
     }
   }
   onPointermove(event: PointerEvent, customEvent: customEvent): void {

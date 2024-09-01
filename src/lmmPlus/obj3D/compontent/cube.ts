@@ -18,6 +18,11 @@ import {
   TypedArray,
   Material,
   Box3,
+  Object3D,
+  Color,
+  LessEqualDepth,
+  Matrix4,
+  Quaternion,
 } from 'three';
 import { DASH_SIZE, GAP_SIZE } from './const/boxConst';
 import { CommonGeo } from '../geo/CommonGeo';
@@ -204,23 +209,11 @@ export class Cube extends CommonGeo {
     this.height = Math.abs(this.height);
     return this.buildGeoBySize();
   }
-  buildGeoBySize() {
+  buildGeoBySize(position?: Vector3, quaternion?: Quaternion, metaData?: any) {
     // 创建立方体
     const geometry = new BoxGeometry(this.width, this.height, this.depth);
-    // this.getAllVer(geometry);
-    // 每个面 都需要 实例一个材质
-    const materilaArrSource = [];
-    for (let i = 0; i < 6; i++) {
-      const m = new MeshStandardMaterial({
-        color: 0xffffff,
-        side: DoubleSide,
-        depthFunc: NeverDepth,
-        polygonOffset: true,
-        polygonOffsetFactor: 1,
-        polygonOffsetUnits: 4,
-      });
-      materilaArrSource.push(m);
-    }
+    // 每个面的材质
+    const materilaArrSource = this.buildMaterial(metaData);
     this.realGeo = new Mesh(geometry, materilaArrSource);
     this.realGeo.name = 'cube';
 
@@ -234,8 +227,48 @@ export class Cube extends CommonGeo {
     this.originGroup.add(lineMesh);
     this.originGroup.name = 'cubeBox';
     this.getMinSize();
-    this.transformGeo(this.originGroup);
+    this.transformGeo(position, quaternion);
     return this.originGroup;
+  }
+
+  buildMaterial(metaData?: any) {
+    const materilaArrSource = [];
+    if (metaData) {
+      for (let i = 0; i < metaData.materials.length; i++) {
+        // 判断是否为面的材质类型
+        if (metaData.materials[i].type !== 'MeshStandardMaterial') continue;
+        const color = new Color(metaData.materials[i].color).getHexString();
+        // 在遍历材质时，需要将已近有颜色的面 记录下来  -- 这一版的 depthFunc 返回有问题  只会返回 0 对应的NeverDepth , 不返回 LessEqualDepth
+        const depthFunc = metaData.materials[i].depthFunc;
+        if (depthFunc !== NeverDepth) {
+          this.alreadyChangeIndexs.set(i, '#' + color);
+        }
+        const m = new MeshStandardMaterial({
+          color: '#' + color,
+          side: DoubleSide,
+          depthFunc: depthFunc === NeverDepth ? NeverDepth : LessEqualDepth,
+          polygonOffset: true,
+          polygonOffsetFactor: 1,
+          polygonOffsetUnits: 4,
+        });
+        materilaArrSource.push(m);
+      }
+    } else {
+      // 每个面 都需要 实例一个材质
+      for (let i = 0; i < 6; i++) {
+        const m = new MeshStandardMaterial({
+          color: 0xffffff,
+          side: DoubleSide,
+          depthFunc: NeverDepth,
+          polygonOffset: true,
+          polygonOffsetFactor: 1,
+          polygonOffsetUnits: 4,
+        });
+        materilaArrSource.push(m);
+      }
+    }
+
+    return materilaArrSource;
   }
   // 将边缘线框 转为普通的线框 -- 为了解决在导入导出几何体时 不支持 边缘集合体的数据
   converLine(edges: EdgesGeometry) {
@@ -400,22 +433,24 @@ export class Cube extends CommonGeo {
   // 遍历 八个顶点 寻找最远的点  最远点所连的线 就是虚线
   searchDash(totalVertices: number[] | Float32Array) {
     // console.log(totalVertices,'totalVerticestotalVertices');
-    const cameraPosition = this.camera.position.clone();
+    let cameraPosition = this.camera.position.clone();
     let maxDistanceVec = new Vector3();
     let maxDistanceValue = 0;
-    const originTotalVec = []; // 保存的原始顶点数据
+
+    /* 计算视点 沿 视线的方向中 距离立方体八个顶点最远的那个，三边就是虚线样式 */
+    if (this.originGroup) {
+      const translateVec = this.originGroup.position
+        .clone()
+        .sub(new Vector3(0, 0, 0));
+      cameraPosition = cameraPosition.add(translateVec);
+    }
     for (let i = 0; i < totalVertices.length; i += 3) {
       const point = new Vector3(
         totalVertices[i],
         totalVertices[i + 1],
         totalVertices[i + 2]
       );
-      // if(!this.originTotalPoint){
-      //   // 第一次遍历顶点时  保存原始的顶点向量
-      //   originTotalVec.push(point)
-      // }
-      // const distance = cameraPosition.sub(point).lengthSq()  //todo:计算向量的长度为什么不对啊
-      const distance = cameraPosition.distanceToSquared(point); //todo:计算向量的长度为什么不对啊
+      const distance = cameraPosition.distanceToSquared(point);
       if (distance > maxDistanceValue) {
         maxDistanceVec = point.clone();
         maxDistanceValue = distance;
@@ -429,12 +464,19 @@ export class Cube extends CommonGeo {
   }
 
   // 根据落点信息 将几何体移到绘制的位置上 默认插入到原点
-  transformGeo(geo: Group) {
-    const deltaX = (this.downPoint.x + this.upPoint.x) / 2;
-    const deltaZ = (this.downPoint.z + this.upPoint.z) / 2;
-    geo.translateX(deltaX);
-    geo.translateZ(deltaZ);
-    geo.translateY(this.dirHeight / 2);
+  transformGeo(position?: Vector3, quaternion?: Quaternion) {
+    if (position) {
+      this.originGroup!.translateX(position.x);
+      this.originGroup!.translateZ(position.z);
+      this.originGroup!.translateY(position.y);
+      this.originGroup!.applyQuaternion(quaternion as Quaternion);
+    } else {
+      const deltaX = (this.downPoint.x + this.upPoint.x) / 2;
+      const deltaZ = (this.downPoint.z + this.upPoint.z) / 2;
+      this.originGroup!.translateX(deltaX);
+      this.originGroup!.translateZ(deltaZ);
+      this.originGroup!.translateY(this.dirHeight / 2);
+    }
   }
 
   // 相机改变 更新虚线
@@ -594,6 +636,11 @@ export class Cube extends CommonGeo {
     this.totalScaleY = scale.y;
     this.totalScaleZ = scale.z;
   }
+  setAllDashStyle(scaleX: number, scaleY: number, scaleZ: number) {
+    this.dashUpdateLine(scaleY);
+    this.dashRightUpdateLine(scaleX);
+    this.dashFrontUpdateLine(scaleZ);
+  }
 
   getMinSize() {
     const points = [];
@@ -624,38 +671,34 @@ export class Cube extends CommonGeo {
     }
     return [points];
   }
-  // 根据最新的矩阵计算 最新的最小包围盒信息
-  getNewMinBoxPoint() {
-    const material = new LineBasicMaterial({
-      color: 0xff0000,
-    });
-
-    const points = [];
-
-    for (let i = 0; i < this.minBoxPointArr.length; i++) {
-      const newPoint = this.minBoxPointArr[i]
-        .clone()
-        .applyMatrix4(this.originGroup!.matrixWorld);
-      points.push(newPoint);
-    }
-
-    const geometry = new BufferGeometry().setFromPoints(points);
-
-    const line = new Line(geometry, material);
-    return line;
-  }
 
   // 对整个几何体进行缩放
   scaleTotalByValue(value: number) {
     const { totalScaleX, totalScaleY, totalScaleZ } = this;
-    const newScaleX = totalScaleX + (value);
-    const newScaleY = totalScaleY + (value);
-    const newScaleZ = totalScaleZ + (value);
-
+    const newScaleX = totalScaleX * (1 + value);
+    const newScaleY = totalScaleY * (1 + value);
+    const newScaleZ = totalScaleZ * (1 + value);
     this.originGroup!.scale.set(newScaleX, newScaleY, newScaleZ);
-    // this.setAllDashStyle(newScaleX, newScaleY, newScaleZ);
-    // this.totalScaleX = newScaleX;
-    // this.totalScaleY = newScaleY;
-    // this.totalScaleZ = newScaleZ;
+    this.setAllDashStyle(newScaleX, newScaleY, newScaleZ);
+  }
+  scaleTotalByValueEnd() {
+    const scale = this.originGroup!.scale;
+    this.totalScaleX = scale.x;
+    this.totalScaleY = scale.y;
+    this.totalScaleZ = scale.z;
+  }
+
+  /**
+   * 解析数据，还原几何体 ，，这里做了重置操作，还原后的数据，缩放值为1
+   * @param obj 
+   * @param metaData 
+   * @returns 
+   */
+  parseData(obj: any, metaData: any) {
+    const { width, depth, height } = obj.children[0].geometry.parameters;
+    this.width = width * obj.scale.x;
+    this.depth = depth * obj.scale.z;
+    this.height = height * obj.scale.y;
+    return this.buildGeoBySize(obj.position as Vector3, obj.quaternion,metaData);
   }
 }

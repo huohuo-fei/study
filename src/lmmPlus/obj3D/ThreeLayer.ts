@@ -16,13 +16,13 @@ import createRenderer from './threeSystem/render';
 import createScene from './threeSystem/scene';
 import createFloorPlank from './threeSystem/floorPlank';
 import TrackballObj from './threeSystem/TrackballObj';
-import { RotateControl } from './threeSystem/RotateControl';
-import { ResizeControl } from './threeSystem/ResizeControl';
-import { FillControl } from './threeSystem/FillControl';
-import { DrawControl } from './threeSystem/DrawControl';
+import { RotateControl } from './control/RotateControl';
+import { ResizeControl } from './control/ResizeControl';
+import { FillControl } from './control/FillControl';
+import { DrawControl } from './control/DrawControl';
 import { RenderLayer } from './renderLayer';
 import { GeoBase } from './geo/GeoBase';
-import { TransformControl } from './threeSystem/Transform';
+import { TransformControl } from './control/TransformControl';
 
 // 文件主要处理渲染相关的逻辑
 export class ThreeLayer {
@@ -76,11 +76,10 @@ export class ThreeLayer {
     });
 
     this.axesHelper = new AxesHelper(10);
-    this.scene.add(this.axesHelper);
+    // this.scene.add(this.axesHelper);
   }
 
   render() {
     this.threeRender.render(this.scene, this.camera);
-    // this.uiCanvas.drawImage()
   }
 }

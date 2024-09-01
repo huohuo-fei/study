@@ -34,7 +34,11 @@ export function converCoordinateTo3D(
   return [x, y];
 }
 
-export function threeToCanvas(webglPoint: Vector3, canvasW: number, canvasH: number) {
+export function threeToCanvas(
+  webglPoint: Vector3,
+  canvasW: number,
+  canvasH: number
+) {
   const [x, y] = [
     ((webglPoint.x + 1) / 2) * canvasW,
     (-(webglPoint.y - 1) / 2) * canvasH,
@@ -133,7 +137,7 @@ export const converCanvas = (
   circlePointsArr: any,
   camera: OrthographicCamera,
   canvas: OffscreenCanvas | HTMLCanvasElement
-)=> {
+) => {
   const points = [];
   // 对传来的数据做双重循环 [[],[],[]],每一个数组 都是一个不同类型的点的集合
   for (let i = 0; i < circlePointsArr.length; i++) {
@@ -144,8 +148,6 @@ export const converCanvas = (
         circlePointsArr[i][j + 2]
       );
       const standardVec = point.project(camera);
-      console.log(standardVec,'standardVec');
-      
       // 需要将 NDC 尺寸的坐标 转为 canvas尺寸下的坐标  -- 屏幕坐标
       const [screenX, screenY] = threeToCanvas(
         standardVec,
@@ -156,14 +158,14 @@ export const converCanvas = (
     }
   }
   return cicleMinBox(points);
-}
+};
 
 // 寻找webgl坐标下的 包围盒点位
 export const converCanvas2 = (
   circlePointsArr: any,
   camera: OrthographicCamera,
   canvas: OffscreenCanvas | HTMLCanvasElement
-)=> {
+) => {
   const points = [];
   // 对传来的数据做双重循环 [[],[],[]],每一个数组 都是一个不同类型的点的集合
   for (let i = 0; i < circlePointsArr.length; i++) {
@@ -178,8 +180,7 @@ export const converCanvas2 = (
     }
   }
   return cicleMinBox(points);
-}
-
+};
 
 function cicleMinBox(pointArr: any) {
   // 根据传入的坐标，记录四个值：minX minY maxX maxY
@@ -212,35 +213,61 @@ function cicleMinBox(pointArr: any) {
     }
   }
 
-    const OFFSET_LITTLE = 0;
+  const OFFSET_LITTLE = 0;
 
-  return [minX - OFFSET_LITTLE, minY-OFFSET_LITTLE, maxX +OFFSET_LITTLE, maxY+OFFSET_LITTLE];
+  return [
+    minX - OFFSET_LITTLE,
+    minY - OFFSET_LITTLE,
+    maxX + OFFSET_LITTLE,
+    maxY + OFFSET_LITTLE,
+  ];
 }
 
-  /**
-   * 根据包围盒信息 生成 canvas 副本，并对当前几何体数据做保存
-   */
-export const createCacheCanvas = (minX: number, minY: number, maxX: number, maxY: number,canvas:HTMLCanvasElement |OffscreenCanvas) => {
-    const OFFSET_LITTLE = 0;
-    // 计算位置 和大小 这里添加一个偏移量 扩大最小包围盒
-    const [newMinX, newMinY, newMaxX, newMaxY] = [
-      minX - OFFSET_LITTLE,
-      minY - OFFSET_LITTLE,
-      maxX + OFFSET_LITTLE,
-      maxY + OFFSET_LITTLE,
-    ];
+/**
+ * 根据包围盒信息 生成 canvas 副本，并对当前几何体数据做保存
+ */
+export const createCacheCanvasOld = (
+  minX: number,
+  minY: number,
+  maxX: number,
+  maxY: number,
+  canvas: HTMLCanvasElement | OffscreenCanvas
+) => {
+  const OFFSET_LITTLE = 0;
+  // 计算位置 和大小 这里添加一个偏移量 扩大最小包围盒
+  const [newMinX, newMinY, newMaxX, newMaxY] = [
+    minX - OFFSET_LITTLE,
+    minY - OFFSET_LITTLE,
+    maxX + OFFSET_LITTLE,
+    maxY + OFFSET_LITTLE,
+  ];
 
-    const [width, height] = [newMaxX - newMinX, newMaxY - newMinY];
-    return new Promise<ImageBitmap>((resolve, reject) => {
-      // 向 3D 画布截取指定内容时 需要注意：3D画布考虑了像素比的问题，所以，截取范围和坐标需要 * dip
-      createImageBitmap(
-        canvas,
-        newMinX,
-        newMinY,
-        width,
-        height
-      ).then((imageBitmap) => {
+  const [width, height] = [newMaxX - newMinX, newMaxY - newMinY];
+  return new Promise<ImageBitmap>((resolve, reject) => {
+    // 向 3D 画布截取指定内容时 需要注意：3D画布考虑了像素比的问题，所以，截取范围和坐标需要 * dip
+    createImageBitmap(canvas, newMinX, newMinY, width, height).then(
+      (imageBitmap) => {
         resolve(imageBitmap);
-      });
-    });
-  }
+      }
+    );
+  });
+};
+
+/**
+ * 根据包围盒信息 生成 canvas 副本，并对当前几何体数据做保存
+ */
+export const createCacheCanvas = (
+  canvas: HTMLCanvasElement | OffscreenCanvas
+) => {
+  return new Promise<OffscreenCanvas>((resolve, reject) => {
+    // 向 3D 画布截取指定内容时 需要注意：3D画布考虑了像素比的问题，所以，截取范围和坐标需要 * dip
+    createImageBitmap(canvas).then(
+      (imageBitmap) => {
+        const cacheCanvas = new OffscreenCanvas(canvas.width,canvas.height)
+        const ctx = cacheCanvas.getContext('2d')
+        ctx?.drawImage(imageBitmap,0,0)
+        resolve(cacheCanvas);
+      }
+    );
+  });
+};

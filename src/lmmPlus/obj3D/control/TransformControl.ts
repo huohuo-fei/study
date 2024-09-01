@@ -2,7 +2,6 @@ import {
   AlwaysDepth,
   BufferAttribute,
   BufferGeometry,
-  DoubleSide,
   Group,
   LineBasicMaterial,
   LineLoop,
@@ -15,7 +14,7 @@ import { customEvent } from '../../driver';
 import { Receiver } from '../../driver/Receiver';
 import { ThreeLayer } from '../ThreeLayer';
 import { Vector2 } from '../../math/Vector2';
-import { converCoordinateTo3D, getObjByPoint, getPointOfFloor } from '../utils';
+import { converCoordinateTo3D, destroyObj, getObjByPoint, getPointOfFloor } from '../utils';
 
 // 控制框，负责在平面上变换几何体，
 
@@ -33,27 +32,25 @@ enum scaleDir {
   none = 'none',
 }
 export class TransformControl extends Receiver {
-  rectLineMesh: Mesh | null = null;
   baserRender: ThreeLayer;
   rectSideWidth: number;
   rectSideHeight: number;
-  transformGroup: Group | null;
+  transformGroup: Group | null = null;
   transformType: transformType = transformType.none;
   scaleDir: scaleDir = scaleDir.none;
   dragStart: Vector2 = new Vector2(0, 0);
   dragEnd: Vector2 = new Vector2(0, 0);
-  baseWidth: number = 0;
   totalScaleX: number = 1;
   totalScaleY: number = 1;
   totalScaleZ: number = 1;
   minBox: number[] = [];
   centerPos: Vector3 | null = null;
   oldValue: number = 0;
+  smallRectArr: Group[] = [];
 
   constructor(renderLayer: ThreeLayer) {
     super();
 
-    this.transformGroup = new Group();
     // 小矩形控制框的边长是10  len 就是10px 转为 webgl坐标的长度
     const len = (10 * 2) / renderLayer.width;
     this.baserRender = renderLayer;
@@ -66,54 +63,61 @@ export class TransformControl extends Receiver {
     this.rectSideHeight = len * ratio;
   }
   initLineRect(minbox: number[]) {
-    this.minBox = [...minbox];
-    this.createLineFrame(minbox);
-    this.createRectCube(minbox);
+    this.transformGroup = new Group();
+    // 拿到包围盒数据后，需要将尺寸扩大1px ,防止压线  -- 1px webgl的线宽默认1px
+    const littleW = (1 * 2) / this.baserRender.width;
+    this.minBox = [
+      minbox[0] - littleW,
+      minbox[1] - littleW,
+      minbox[2] + littleW,
+      minbox[3] + littleW,
+    ];
+    this.createLineFrame(this.minBox);
+    this.createRectCube(this.minBox);
     this.baserRender.scene.add(this.transformGroup!);
   }
 
   /**
-   * @param minbox 几何体在相机视口下的最小盒子
-   * @param type 是move的打平面 还是四个控制矩形框的小平面
-   * @param dir 四个小平面的标志
+   * 用于构建 带边框的矩形
+   * @param minBox
+   * @param materialPlane
+   * @param planeName
+   * @returns
    */
-  createLineFrame(
-    minbox: number[],
-    type: 'big' | 'small' = 'big',
-    dir?: string
+  buildRectPlane(
+    minBox: number[],
+    materialPlane: MeshBasicMaterial,
+    planeName: string
   ) {
     // 计算矩形的四个点
     const p0 = getPointOfFloor(
-      minbox[0],
-      minbox[1],
+      minBox[0],
+      minBox[1],
       this.baserRender.camera,
       this.baserRender.floorPlank
     );
     const p1 = getPointOfFloor(
-      minbox[0],
-      minbox[3],
+      minBox[0],
+      minBox[3],
       this.baserRender.camera,
       this.baserRender.floorPlank
     );
     const p2 = getPointOfFloor(
-      minbox[2],
-      minbox[3],
+      minBox[2],
+      minBox[3],
       this.baserRender.camera,
       this.baserRender.floorPlank
     );
     const p3 = getPointOfFloor(
-      minbox[2],
-      minbox[1],
+      minBox[2],
+      minBox[1],
       this.baserRender.camera,
       this.baserRender.floorPlank
     );
 
-    // 如果是大框，需要计算框的中点
-    if (type === 'big') {
-      this.centerPos = p2.clone().sub(p0).multiplyScalar(0.5).add(p0);
-    }
-
-    /** 矩形平面 **/
+    // 最后生成平面的中心点坐标
+    const centerPos = p2.clone().sub(p0).multiplyScalar(0.5).add(p0);
+    /** 自定义矩形平面 **/
     const geometry = new BufferGeometry();
     // 创建一个简单的矩形. 在这里我们左上和右下顶点被复制了两次。
     // 因为在两个三角面片里，这两个顶点都需要被用到。
@@ -125,29 +129,11 @@ export class TransformControl extends Receiver {
       ...p1,
       ...p0,
     ]);
-
     // itemSize = 3 因为每个顶点都是一个三元组。
     geometry.setAttribute('position', new BufferAttribute(vertices, 3));
-    let materialPlane;
-
-    if (type === 'small') {
-      materialPlane = new MeshBasicMaterial({
-        color: 0xffffff,
-        depthFunc: AlwaysDepth,
-      });
-    } else {
-      materialPlane = new MeshBasicMaterial({
-        color: 0xffffff,
-        transparent: true,
-        opacity: 0, // 设置透明度
-      });
-    }
+    /* 矩形平面 */
     const rectPlane = new Mesh(geometry, materialPlane);
-    if (type === 'big') {
-      rectPlane.name = 'transformMove';
-    } else {
-      rectPlane.name = 'transformScale' + dir;
-    }
+    rectPlane.name = planeName;
     /** 矩形框 **/
     const points = [];
     points.push(...p0, ...p1, ...p2, ...p3);
@@ -166,16 +152,34 @@ export class TransformControl extends Receiver {
 
     controlPlane.add(rectLineMesh);
     controlPlane.add(rectPlane);
-
     // 这里需要将控制框的位置 移到中点，默认的位置是 (0,0,0),在缩放时 需要做基点变换
-    controlPlane.translateX(-this.centerPos!.x);
-    controlPlane.translateZ(-this.centerPos!.z);
-    this.transformGroup?.add(controlPlane);
-    if (type === 'big') {
-      this.transformGroup!.translateX(this.centerPos!.x);
-      this.transformGroup!.translateZ(this.centerPos!.z);
-      (this.transformGroup as Group).name = 'transformGroup';
-    }
+    controlPlane.translateX(-centerPos!.x);
+    controlPlane.translateZ(-centerPos!.z);
+    return {
+      plane: controlPlane,
+      centerPos,
+    };
+  }
+
+  /**
+   * @param minbox 几何体在相机视口下的最小盒子
+   */
+  createLineFrame(minbox: number[]) {
+    const materialPlane = new MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0, // 设置透明度
+    });
+    const { plane, centerPos } = this.buildRectPlane(
+      minbox,
+      materialPlane,
+      'transformMove'
+    );
+    this.centerPos = centerPos;
+    this.transformGroup?.add(plane);
+    this.transformGroup!.translateX(this.centerPos!.x);
+    this.transformGroup!.translateZ(this.centerPos!.z);
+    (this.transformGroup as Group).name = 'transformGroup';
   }
 
   /**
@@ -197,18 +201,39 @@ export class TransformControl extends Receiver {
       return [item.x - halfW, item.y - halfH, item.x + halfW, item.y + halfH];
     });
 
+    const materialPlane = new MeshBasicMaterial({
+      color: 0xffffff,
+      depthFunc: AlwaysDepth,
+    });
     for (let i = 0; i < totalPoints.length; i++) {
-      this.createLineFrame(totalPoints[i], 'small', String(i));
+      const { plane, centerPos } = this.buildRectPlane(
+        totalPoints[i],
+        materialPlane,
+        'transformScale' + String(i)
+      );
+      const parentGroup = new Group();
+      parentGroup.add(plane);
+      parentGroup.translateX(centerPos.x - this.centerPos!.x);
+      parentGroup.translateZ(centerPos.z - this.centerPos!.z);
+      this.transformGroup?.add(parentGroup);
+      this.smallRectArr.push(parentGroup);
     }
   }
 
+
   onPointerdown(event: PointerEvent, customEvent: customEvent): void {
+    if(!this.transformGroup){
+      // 需要寻找缓存canvas
+      this.baserRender.baseLayer.cacheSnapshot.searchGeoByPointe(customEvent.x,customEvent.y)
+      return
+    }
     const [x, y] = converCoordinateTo3D(
       customEvent.x,
       customEvent.y,
       this.baserRender.width,
       this.baserRender.height
     );
+
     const targerObjArr = [this.transformGroup!];
     const resObj = getObjByPoint(x, y, this.baserRender.camera, targerObjArr);
     if (resObj) {
@@ -233,9 +258,15 @@ export class TransformControl extends Receiver {
       }
     } else {
       this.transformType = transformType.none;
+      // 没有选中控制框 输出图片
+      this.destroyTransformGroup()
+      this.baserRender.geoBase.convertSnapshot()
+      
     }
   }
   onPointermove(event: PointerEvent, customEvent: customEvent): void {
+    if(!this.transformGroup)return
+
     if (this.transformType === transformType.none) return;
     const { dragEnd } = this;
     const [x, y] = converCoordinateTo3D(
@@ -252,7 +283,17 @@ export class TransformControl extends Receiver {
     }
   }
   onPointerup(event: PointerEvent, customEvent: customEvent): void {
+    if(!this.transformGroup)return
     this.transformType = transformType.none;
+    this.updateScaleValue();
+    this.baserRender.geoBase.scaleAllDirEnd();
+
+    // 每次变换结束后，都需要重新生成一个控制框
+    if(this.transformGroup){
+      this.destroyTransformGroup()
+      this.transformGroup = new Group()
+      this.baserRender.geoBase.showFrame()
+    }
   }
 
   move() {
@@ -274,11 +315,11 @@ export class TransformControl extends Receiver {
       dragEnd.y - dragStart.y
     );
     const dotValue = moveDir.dot(dir);
-    const scaleValue =   dotValue / totalLen;
+    const scaleValue = dotValue / totalLen;
 
     this.calcTranslateScale(scaleValue);
     this.scaleTotalByValue(scaleValue);
-    this.baserRender.geoBase.geoObj.scaleTotalByValue(scaleValue);
+    this.baserRender.geoBase.scaleAllDir(scaleValue);
     this.oldValue = scaleValue;
   }
 
@@ -364,9 +405,44 @@ export class TransformControl extends Receiver {
   // 对整个几何体进行缩放
   scaleTotalByValue(value: number) {
     const { totalScaleX, totalScaleY, totalScaleZ } = this;
-    const newScaleX = totalScaleX * (1 + value);
-    const newScaleY = totalScaleY * (1 + value);
-    const newScaleZ = totalScaleZ * (1 + value);
+    const newScaleX = totalScaleX + value;
+    const newScaleY = totalScaleY + value;
+    const newScaleZ = totalScaleZ + value;
     this.transformGroup!.scale.set(newScaleX, newScaleY, newScaleZ);
+    this.rectScaleInvert(newScaleX, newScaleY, newScaleZ);
+  }
+
+  /**
+   * 对四角矩形控制框的逆缩放，保证缩放时尺寸不变
+   * @param value
+   */
+  rectScaleInvert(scaleX: number, scaleY: number, scaleZ: number) {
+    for (let i = 0; i < this.smallRectArr.length; i++) {
+      this.smallRectArr[i].scale.set(1 / scaleX, 1 / scaleY, 1 / scaleZ);
+    }
+  }
+
+  /**
+   * 更新缩放值，由于缩放使用的是累计变换
+   * 所以每次缩放结束后，需要将最新的缩放值同步到对象中，确保下次缩放正常
+   */
+  updateScaleValue() {
+    if(!this.transformGroup)return
+    const scale = this.transformGroup!.scale;
+    this.totalScaleX = scale.x;
+    this.totalScaleY = scale.y;
+    this.totalScaleZ = scale.z;
+    this.oldValue = 0;
+  }
+
+  destroyTransformGroup(){
+    if(!this.transformGroup)return
+    this.baserRender.scene.remove(this.transformGroup!)
+    destroyObj(this.transformGroup)
+    this.smallRectArr = []
+    this.transformGroup =null
+    this.totalScaleX = 1;
+    this.totalScaleY = 1;
+    this.totalScaleZ = 1;
   }
 }

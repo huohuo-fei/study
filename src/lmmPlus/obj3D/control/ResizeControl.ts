@@ -7,7 +7,7 @@ import {
   Group,
   Vector2,
 } from 'three';
-import { TOP_RENDER_ORDER, RESIZE_CYLINDER_R, RESIZE_CIRCLE_R } from './const';
+import { TOP_RENDER_ORDER, RESIZE_CYLINDER_R, RESIZE_CIRCLE_R } from '../threeSystem/const';
 import { ThreeLayer } from '../ThreeLayer';
 import { CommonGeo } from '../geo/CommonGeo';
 import { Receiver } from '../../driver/Receiver';
@@ -222,7 +222,8 @@ class ResizeControl extends Receiver {
         }
       }
     } else {
-      console.log('move');
+      this.renderLayer.geoBase.showFrame()
+      this.resizeDir = resizeDir.none;
     }
   }
 

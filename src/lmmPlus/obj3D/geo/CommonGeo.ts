@@ -6,6 +6,7 @@ import {
   Vector3,
   Group,
   OrthographicCamera,
+  Object3D,
 } from 'three';
 import { ThreeLayer } from '../ThreeLayer';
 // 几何体的基类  -- 这里提供了每个几何体需要有的方法
@@ -129,6 +130,11 @@ class CommonGeo {
     return []
   }
   scaleTotalByValue(value:number){}
+  scaleTotalByValueEnd(){}
+  // 解析数据，生成一个几何体
+  parseData(obj: Object3D, metaData: any){
+    return new Group()
+  }
 }
 
 export { CommonGeo };

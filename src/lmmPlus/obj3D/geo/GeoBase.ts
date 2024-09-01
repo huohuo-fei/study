@@ -2,16 +2,15 @@ import { eventType } from '../../driver';
 import { ThreeLayer } from '../ThreeLayer';
 import { Cube } from '../compontent/cube';
 import { getPointOfFloor, destroyObj, converCanvas, createCacheCanvas, converCanvas2 } from '../utils';
-import { Group, Mesh, Vector3, Points, Quaternion } from 'three';
+import { Group, Mesh, Vector3, Points, Quaternion, ObjectLoader, Object3D } from 'three';
 import { CommonGeo } from './CommonGeo';
 import { Vector2 } from '../../math/Vector2';
-
-enum geoType {
-  cube='cube'
-}
+import { snapshotType } from '../snapshot';
+import { GeoType } from '../renderLayer';
 
 /**
  * 统领当前激活的几何体，保存着几何体的实例对象 ，用于分发各种对几何体的操作
+ * 最好做到，所有对几何体的直接操作，都必须由geo来操作
  */
 export class GeoBase {
   // 当前激活的几何体  -- 后续为数组形式  支持多个几何体
@@ -22,19 +21,30 @@ export class GeoBase {
   bottomLine: Group | null = null;
   // 几何体实例 -- 后续要扩充为数组  同时有多个几何体
   originGroup!: Group;
+  geoType:GeoType | null = null
   constructor(renderLayer: ThreeLayer) {
     this.renderLayer = renderLayer;
   }
 
-  setGeoObj(type:geoType){
-    if(type === geoType.cube){
+  /**
+   * 根据类型 实例化几何体
+   * @param type 几何体类型
+   */
+  setGeoObj(type:GeoType){
+    if(type === GeoType.cube){
       this.geoObj = new Cube(this.renderLayer);
     }
+    this.geoType = type
   }
 
+  /**
+   * 绘制底面线框
+   * @param startPoint 
+   * @param endPoint 
+   */
   drawBottomLine(startPoint: Vector3, endPoint: Vector3) {
     if(!this.geoObj){
-      this.setGeoObj(geoType.cube)
+      this.setGeoObj(GeoType.cube)
     }
     const bottomLine = this.geoObj.drawBottom(startPoint, endPoint);
     if (!this.bottomLine) {
@@ -42,6 +52,12 @@ export class GeoBase {
       this.bottomLine = bottomLine;
     }
   }
+
+  /**
+   * 拉伸底面线框 形成线框几何体
+   * @param movePoint 
+   * @param stretchPointStart 
+   */
   drawStretchLine(movePoint: [number, number], stretchPointStart: number[]) {
     const pointPos = getPointOfFloor(
       stretchPointStart[0],
@@ -71,6 +87,7 @@ export class GeoBase {
     const height = -ratio * totalHeight;
     this.geoObj.stretchBottomThree(height);
   }
+
   createGeo() {
     this.originGroup = this.geoObj.createGeo();
     this.originGroup && this.renderLayer.scene.add(this.originGroup);
@@ -96,6 +113,17 @@ export class GeoBase {
     this.geoObj.saveOutSize();
   }
 
+  /**
+   * 对整个几何体进行缩放
+   * @param scaleValue 
+   */
+  scaleAllDir(scaleValue:number){
+    this.geoObj.scaleTotalByValue(scaleValue);
+  }
+  scaleAllDirEnd(){
+    this.geoObj.scaleTotalByValueEnd()
+  }
+
   /** 切换控制器 */
   switchControl(mode: eventType) {
     if(mode === eventType.rotate3D){
@@ -108,6 +136,7 @@ export class GeoBase {
       this.renderLayer.rotateCon.destroyControl(this.geoObj);
       this.renderLayer.resizeCon.destroyControl(this.geoObj);
     }
+    this.renderLayer.transformControl.destroyTransformGroup()
   }
 
   /**
@@ -128,8 +157,43 @@ export class GeoBase {
     this.bottomLine = null;
   }
 
-  /** 当前几何体失活 生成一个几何体快照 并输出一张图片 */
+  /** 当前几何体失活 输出一张图片到bgcanvas,并保存几何体的相关信息 */
   convertSnapshot(){
+    this.removeControl()
+    const circlePointsArr = this.geoObj.getMinSize()
+    const minBox = converCanvas(circlePointsArr, this.renderLayer.camera, this.renderLayer.canvas) as [number,number,number,number]
+    createCacheCanvas(this.renderLayer.canvas).then(offscreenCanvas => {
+      const snapshotData:snapshotType ={
+        minBox,
+        resourceCanvas:offscreenCanvas,
+        originData:{
+          type:this.geoType as GeoType,
+          data:this.originGroup.toJSON()
+        }
+      } 
+      this.clearObj()
+      this.renderLayer.baseLayer.cacheSnapshot.addSnapshot(snapshotData)
+    })
+  }
+
+  // 解析数据  重新生成几何体
+  parseData(snapshotData:snapshotType){
+    const {originData} = snapshotData
+    this.setGeoObj(originData.type)
+    new ObjectLoader().parse(originData.data,(obj:Object3D) => {
+      this.originGroup =  this.geoObj.parseData(obj,originData.data)
+      this.renderLayer.scene.add(this.originGroup);
+      this.renderLayer.baseLayer.cacheSnapshot.removeSnapshot(snapshotData)
+      this.showFrame()
+      this.geoObj.updateDash()
+    })
+    
+  }
+
+  /**
+   * resize rotate 控制器失活，显示控制框
+   */
+  showFrame(){
     this.removeControl()
     const circlePointsArr = this.geoObj.getMinSize()
     const minBox = converCanvas2(circlePointsArr, this.renderLayer.camera, this.renderLayer.canvas)
@@ -137,8 +201,10 @@ export class GeoBase {
     // 检测两个点 与 地板的焦点 并绘制一个矩形框
     this.renderLayer.transformControl.initLineRect(minBox)
     this.renderLayer.baseLayer.setMode(eventType.select)
-
-
+    this.renderLayer.baseLayer.dispatchEvent({
+      type: 'switchGeoMode',
+      mode: eventType.select,
+    });
   }
 
   // 清空数据

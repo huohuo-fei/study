@@ -4,6 +4,7 @@ import { ThreeLayer } from './ThreeLayer';
 import { GeoBase } from './geo/GeoBase';
 import { customEvent } from '../driver';
 import { eventType } from '../driver';
+import { Snapshot } from './snapshot';
 /** 每个画布的渲染层  可以有 2d /3d初始化后 生成一个 renderlayer 之后所有的画布操作
  * 都是依据renderLayer 进行
  */
@@ -25,6 +26,8 @@ export class RenderLayer extends Receiver {
   uiCtx: CanvasRenderingContext2D | null;
   bgCtx: CanvasRenderingContext2D | null;
   eventType: eventType = eventType.draw3D;
+  cacheSnapshot:Snapshot
+  isForceRenderBg:boolean = false
 
   constructor(uiCanvas: HTMLCanvasElement, bgCanvas: HTMLCanvasElement) {
     super();
@@ -41,6 +44,7 @@ export class RenderLayer extends Receiver {
     this.topCanvas2.height = height;
     this.threeLayer = new ThreeLayer(this.topCanvas, this);
     this.geoBase = new GeoBase(this.threeLayer);
+    this.cacheSnapshot = new Snapshot(this)
     this.threeLayer.geoBase = this.geoBase;
     this.uiCtx = this.uiCanvas.getContext('2d');
     this.bgCtx = this.bgCanvas.getContext('2d');
@@ -110,6 +114,10 @@ export class RenderLayer extends Receiver {
   }
 
   renderDraw() {
+    if(this.isForceRenderBg){
+      this.renderBg()
+      this.isForceRenderBg = false
+    }
     this.uiCtx?.clearRect(0, 0, this.width, this.height);
     this.threeLayer.render();
     this.uiCtx?.drawImage(this.topCanvas, 0, 0);
@@ -117,8 +125,13 @@ export class RenderLayer extends Receiver {
 
   renderBg() {
     if (this.bgCtx) {
+      // 背景色
       this.bgCtx.fillStyle = '#39597e';
       this.bgCtx.fillRect(0, 0, this.width, this.height);
+
+      // 读取缓存中的图片
+      const cacheCanvas = this.cacheSnapshot.cacheCanvas
+      this.bgCtx.drawImage(cacheCanvas,0,0)
     }
   }
 
