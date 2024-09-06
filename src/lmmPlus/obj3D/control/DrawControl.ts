@@ -17,6 +17,7 @@ import { createPoint } from '../utils/point';
   // 两个圆点
   pointMesh1: Points | null = null;
   pointMesh2: Points | null = null;
+  movePoint:number[] = []
   constructor(renderLayer: ThreeLayer) {
     super();
     this.renderLayer = renderLayer;

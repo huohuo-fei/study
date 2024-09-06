@@ -6,6 +6,10 @@ import {
   CylinderGeometry,
   Group,
   Vector2,
+  Vector3,
+  LineBasicMaterial,
+  BufferGeometry,
+  Line,
 } from 'three';
 import { TOP_RENDER_ORDER, RESIZE_CYLINDER_R, RESIZE_CIRCLE_R } from '../threeSystem/const';
 import { ThreeLayer } from '../ThreeLayer';
@@ -46,6 +50,9 @@ class ResizeControl extends Receiver {
   resizeDir: resizeDir;
   // 落点 webgl 坐标系下的点
   downpoint: number[] = [];
+  dir: Vector3 = new Vector3();
+  len: number = 0;
+  downPointFloor: Vector3 = new Vector3();
   constructor(layer: ThreeLayer) {
     super();
     this.renderLayer = layer;
@@ -225,6 +232,7 @@ class ResizeControl extends Receiver {
       this.renderLayer.geoBase.showFrame()
       this.resizeDir = resizeDir.none;
     }
+    this.saveData(x,y)
   }
 
   onPointermove(event: PointerEvent, customEvent: customEvent): void {
@@ -251,17 +259,12 @@ class ResizeControl extends Receiver {
     const moveXOZ = new Vector2(pointPos2.x, pointPos2.z);
     let distance = 0;
     if (this.resizeDir === resizeDir.up) {
-      const totalHeight = this.renderLayer.camera.position.y;
-      const cameraXOZ = new Vector2(
-        this.renderLayer.camera.position.x,
-        this.renderLayer.camera.position.z
-      );
-      const dir = cameraXOZ.clone().normalize();
-      const moveValue = moveXOZ.clone().sub(geoXOZ).dot(dir);
-      const ratio = moveValue / cameraXOZ.length();
-      distance = -ratio * totalHeight;
+      distance =  this.calcY(pointPos2)
+
+      // distance = -ratio * totalHeight;
     } else if (this.resizeDir === resizeDir.right) {
       const dir = new Vector2(1, 0);
+
       distance = moveXOZ.clone().sub(geoXOZ).dot(dir);
     } else {
       const dir = new Vector2(0, 1);
@@ -270,6 +273,62 @@ class ResizeControl extends Receiver {
     this.renderLayer.geoBase.resizeGeo(this.resizeDir, distance * 2);
     this.updateSize(this.resizeDir, distance * 2);
   }
+
+  saveData(x:number,y:number){
+    // 计算Y轴的resize 值
+    const height = this.renderLayer.geoBase.geoObj.height
+    const vecY = new Vector3(0,1,0).multiplyScalar(height/2).applyMatrix4(this.renderLayer.geoBase.originGroup.matrix)
+    // const DNCVec = vecY.project(this.renderLayer.camera)
+    // const positionDnc = this.renderLayer.geoBase.originGroup.position.clone().project(this.renderLayer.camera)
+
+    // const dir = new Vector2(DNCVec.x - positionDnc.x,DNCVec.y-positionDnc.y).normalize()
+    // const len = new Vector2(DNCVec.x - positionDnc.x,DNCVec.y-positionDnc.y).length()
+    // this.dir = dir
+    // this.len = len
+    console.log(this.lineMesh?.position);
+    const geometry = new SphereGeometry( RESIZE_CIRCLE_R); 
+const material = new MeshBasicMaterial( { color: 0xffff00 } ); 
+const sphere = new Mesh( geometry, material );
+this.lineMesh?.add(sphere)  
+
+const g2 = new SphereGeometry( RESIZE_CIRCLE_R); 
+const sphere2 = new Mesh( g2, material );
+
+const v = this.renderLayer.geoBase.originGroup.position.clone().add(vecY)
+sphere2.position.copy(vecY)
+this.renderLayer.scene.add(sphere2)
+const p1 = this.lineMesh?.position.clone().project(this.renderLayer.camera) as Vector3
+const p2 = vecY.clone().project(this.renderLayer.camera)
+const floorP1 = getPointOfFloor(p1?.x,p1?.y,this.renderLayer.camera,this.renderLayer.floorPlank)
+const floorP2 = getPointOfFloor(p2?.x,p2?.y,this.renderLayer.camera,this.renderLayer.floorPlank)
+
+const dir = floorP2.clone().sub(floorP1).normalize()
+const len = floorP2.clone().sub(floorP1).length()
+    this.dir = dir
+      this.len = len
+  this.downPointFloor = getPointOfFloor(x,y,this.renderLayer.camera,this.renderLayer.floorPlank)
+  }
+
+  calcY(vec3:Vector3){
+    const value = vec3.clone().sub(this.downPointFloor).dot(this.dir)
+    const distance = value / this.len * this.renderLayer.geoBase.geoObj.height
+    // const moveDnc = new Vector2(x- this.downpoint[0],y-this.downpoint[1])
+    // const dotvalue = moveDnc.dot(this.dir)
+    return distance
+  }
+    // 辅助线
+    helpLine(vec:Vector3) {
+      const material = new LineBasicMaterial({
+        color: 0xff0000,
+      });
+  
+      const points = [];
+      points.push(this.renderLayer.geoBase.originGroup.position as Vector3);
+      points.push(vec);
+      const geometry = new BufferGeometry().setFromPoints(points);
+      const line = new Line(geometry, material);
+      this.renderLayer.scene.add(line);
+    }
 
   onPointerup(event: PointerEvent, customEvent: customEvent): void {
     this.resizeDir = resizeDir.none;

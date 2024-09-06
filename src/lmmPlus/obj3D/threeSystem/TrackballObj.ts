@@ -214,7 +214,7 @@ export default class TrackballObj  {
       }
 
     }
-    this.quaternion.setFromAxisAngle(axis, angle);
+    this.quaternion.setFromAxisAngle(axis.normalize(), angle);
     return this.quaternion;
   }
 

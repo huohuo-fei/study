@@ -498,7 +498,7 @@ export class Cube extends CommonGeo {
 
       if (isDash) {
         // 如果是虚线 设置虚线的材质
-        // 先判断当前是否需要更新材质   -- 这里有 bug 需要更新对应轴的缩放比
+        // 先判断当前是否需要更新材质   -- 这里有 bug 需要更新对应轴的缩放比  通过强制更新间距 解决
         if (childMesh.material instanceof LineBasicMaterial) {
           (childMesh.material as Material).dispose();
           childMesh.material = new LineDashedMaterial({
@@ -519,6 +519,9 @@ export class Cube extends CommonGeo {
         }
       }
     }
+
+    // 寻找到最新的虚线后  立马同步最新的间距  -- 优化空间，只有换了虚线才触发
+    this.scaleTotalByValue(0)
   }
   // 每次寻找虚线之前，需要根据原始的点 生成一份世界坐标系下的点
   getWorldPoint(resourceData: number[]) {
