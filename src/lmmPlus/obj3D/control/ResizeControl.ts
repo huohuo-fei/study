@@ -10,8 +10,16 @@ import {
   LineBasicMaterial,
   BufferGeometry,
   Line,
+  PlaneGeometry,
+  DoubleSide,
+  Ray,
+  Plane,
 } from 'three';
-import { TOP_RENDER_ORDER, RESIZE_CYLINDER_R, RESIZE_CIRCLE_R } from '../threeSystem/const';
+import {
+  TOP_RENDER_ORDER,
+  RESIZE_CYLINDER_R,
+  RESIZE_CIRCLE_R,
+} from '../threeSystem/const';
 import { ThreeLayer } from '../ThreeLayer';
 import { CommonGeo } from '../geo/CommonGeo';
 import { Receiver } from '../../driver/Receiver';
@@ -50,9 +58,13 @@ class ResizeControl extends Receiver {
   resizeDir: resizeDir;
   // 落点 webgl 坐标系下的点
   downpoint: number[] = [];
-  dir: Vector3 = new Vector3();
+  dir: Vector2 = new Vector2();
   len: number = 0;
   downPointFloor: Vector3 = new Vector3();
+  right_dir: Vector3= new Vector3();
+  eyeDir: Vector3= new Vector3();
+  front_dir: Vector3= new Vector3();
+  up_dir: Vector3 = new Vector3();
   constructor(layer: ThreeLayer) {
     super();
     this.renderLayer = layer;
@@ -165,7 +177,7 @@ class ResizeControl extends Receiver {
 
   /** 根据传入的几何体尺寸 生成并挂载 resize 控制器 */
   registerControl(obj: CommonGeo) {
-    const { width, height, depth,totalScaleX,totalScaleY,totalScaleZ } = obj;
+    const { width, height, depth, totalScaleX, totalScaleY, totalScaleZ } = obj;
     this.w = width;
     this.h = height;
     this.d = depth;
@@ -178,8 +190,8 @@ class ResizeControl extends Receiver {
     this.totalScaleX = totalScaleX;
     this.totalScaleY = totalScaleY;
     this.totalScaleZ = totalScaleZ;
-    this.updateSize(resizeDir.right,0)
-    this.updateSize(resizeDir.front,0)
+    this.updateSize(resizeDir.right, 0);
+    this.updateSize(resizeDir.front, 0);
   }
 
   /** 销毁指定对象的 控制器 */
@@ -220,19 +232,26 @@ class ResizeControl extends Receiver {
       if (stripObj.length) {
         this.downpoint.push(x, y);
         const name = stripObj[0].object.name;
+        // 获取视线方向
+        this.eyeDir = this.renderLayer.camera.position
+          .clone()
+          .multiplyScalar(-1)
+          .normalize();
         if (name.includes('up')) {
           this.resizeDir = resizeDir.up;
+          this.calcUpProject();
         } else if (name.includes('right')) {
           this.resizeDir = resizeDir.right;
+          this.calcRightProject();
         } else {
           this.resizeDir = resizeDir.front;
+          this.calcFrontProject();
         }
       }
     } else {
-      this.renderLayer.geoBase.showFrame()
+      this.renderLayer.geoBase.showFrame();
       this.resizeDir = resizeDir.none;
     }
-    this.saveData(x,y)
   }
 
   onPointermove(event: PointerEvent, customEvent: customEvent): void {
@@ -255,86 +274,100 @@ class ResizeControl extends Receiver {
       this.renderLayer.camera,
       this.renderLayer.floorPlank
     );
-    const geoXOZ = new Vector2(pointPos.x, pointPos.z);
-    const moveXOZ = new Vector2(pointPos2.x, pointPos2.z);
     let distance = 0;
     if (this.resizeDir === resizeDir.up) {
-      distance =  this.calcY(pointPos2)
-
-      // distance = -ratio * totalHeight;
+      const dir = this.up_dir.clone().normalize();
+      const value = pointPos2.clone().sub(pointPos).dot(dir);
+      distance = (value / this.up_dir.length()) * (this.h / 2);
     } else if (this.resizeDir === resizeDir.right) {
-      const dir = new Vector2(1, 0);
-
-      distance = moveXOZ.clone().sub(geoXOZ).dot(dir);
+      const dir = this.right_dir.clone().normalize();
+      const value = pointPos2.clone().sub(pointPos).dot(dir);
+      distance = (value / this.right_dir.length()) * (this.w / 2);
     } else {
-      const dir = new Vector2(0, 1);
-      distance = moveXOZ.clone().sub(geoXOZ).dot(dir);
+      const dir = this.front_dir.clone().normalize();
+      const value = pointPos2.clone().sub(pointPos).dot(dir);
+      distance = (value / this.front_dir.length()) * (this.d / 2);
     }
     this.renderLayer.geoBase.resizeGeo(this.resizeDir, distance * 2);
     this.updateSize(this.resizeDir, distance * 2);
   }
-
-  saveData(x:number,y:number){
-    // 计算Y轴的resize 值
-    const height = this.renderLayer.geoBase.geoObj.height
-    const vecY = new Vector3(0,1,0).multiplyScalar(height/2).applyMatrix4(this.renderLayer.geoBase.originGroup.matrix)
-    // const DNCVec = vecY.project(this.renderLayer.camera)
-    // const positionDnc = this.renderLayer.geoBase.originGroup.position.clone().project(this.renderLayer.camera)
-
-    // const dir = new Vector2(DNCVec.x - positionDnc.x,DNCVec.y-positionDnc.y).normalize()
-    // const len = new Vector2(DNCVec.x - positionDnc.x,DNCVec.y-positionDnc.y).length()
-    // this.dir = dir
-    // this.len = len
-    console.log(this.lineMesh?.position);
-    const geometry = new SphereGeometry( RESIZE_CIRCLE_R); 
-const material = new MeshBasicMaterial( { color: 0xffff00 } ); 
-const sphere = new Mesh( geometry, material );
-this.lineMesh?.add(sphere)  
-
-const g2 = new SphereGeometry( RESIZE_CIRCLE_R); 
-const sphere2 = new Mesh( g2, material );
-
-const v = this.renderLayer.geoBase.originGroup.position.clone().add(vecY)
-sphere2.position.copy(vecY)
-this.renderLayer.scene.add(sphere2)
-const p1 = this.lineMesh?.position.clone().project(this.renderLayer.camera) as Vector3
-const p2 = vecY.clone().project(this.renderLayer.camera)
-const floorP1 = getPointOfFloor(p1?.x,p1?.y,this.renderLayer.camera,this.renderLayer.floorPlank)
-const floorP2 = getPointOfFloor(p2?.x,p2?.y,this.renderLayer.camera,this.renderLayer.floorPlank)
-
-const dir = floorP2.clone().sub(floorP1).normalize()
-const len = floorP2.clone().sub(floorP1).length()
-    this.dir = dir
-      this.len = len
-  this.downPointFloor = getPointOfFloor(x,y,this.renderLayer.camera,this.renderLayer.floorPlank)
-  }
-
-  calcY(vec3:Vector3){
-    const value = vec3.clone().sub(this.downPointFloor).dot(this.dir)
-    const distance = value / this.len * this.renderLayer.geoBase.geoObj.height
-    // const moveDnc = new Vector2(x- this.downpoint[0],y-this.downpoint[1])
-    // const dotvalue = moveDnc.dot(this.dir)
-    return distance
-  }
-    // 辅助线
-    helpLine(vec:Vector3) {
-      const material = new LineBasicMaterial({
-        color: 0xff0000,
-      });
-  
-      const points = [];
-      points.push(this.renderLayer.geoBase.originGroup.position as Vector3);
-      points.push(vec);
-      const geometry = new BufferGeometry().setFromPoints(points);
-      const line = new Line(geometry, material);
-      this.renderLayer.scene.add(line);
-    }
 
   onPointerup(event: PointerEvent, customEvent: customEvent): void {
     this.resizeDir = resizeDir.none;
     this.downpoint = [];
     this.renderLayer.geoBase.resizeGeoEnd();
     this.unifyScale();
+  }
+
+
+  // 计算三轴在 XOZ 平面上的投影向量
+  calcFrontProject() {
+    // 物体本地坐标系的 Z轴，
+    const front_axis = new Vector3(0, 0, 1)
+      .multiplyScalar(this.d / 2 / this.totalScaleZ)
+      .applyMatrix4(this.renderLayer.geoBase.originGroup.matrix);
+
+    // 沿着视线的反方向平移一段距离，-- 主要的目的是让射线的起点在平面之上
+    const originPos = front_axis.add(this.renderLayer.camera.position.clone());
+    const projectVec = this.createRay(originPos);
+    this.front_dir = projectVec;
+  }
+  calcRightProject() {
+    const right_axis = new Vector3(1, 0, 0)
+      .multiplyScalar(this.w / 2 / this.totalScaleX)
+      .applyMatrix4(this.renderLayer.geoBase.originGroup.matrix);
+    const originPos = right_axis.add(this.renderLayer.camera.position.clone());
+    const projectVec = this.createRay(originPos);
+    this.right_dir = projectVec;
+  }
+  calcUpProject() {
+    const up_axis = new Vector3(0, 1, 0)
+      .multiplyScalar(this.h / 2 / this.totalScaleY)
+      .applyMatrix4(this.renderLayer.geoBase.originGroup.matrix);
+    const originPos = up_axis.add(this.renderLayer.camera.position.clone());
+    const projectVec = this.createRay(originPos);
+    this.up_dir = projectVec;
+  }
+
+  /**
+   * 根据传来的起点，计算出当前轴在 XOZ 平面上的投影向量
+   * @param originPos 射线器的起点 就是X  Y  Z 轴的世界坐标
+   * @returns
+   */
+  createRay(originPos: Vector3):Vector3 {
+    // X Y Z 轴的射线器
+    const ray = new Ray(originPos, this.eyeDir);
+
+    // 物体中心的射线器
+    const ray2 = new Ray(
+      this.renderLayer.geoBase.originGroup.position
+        .clone()
+        .add(this.renderLayer.camera.position.clone()),
+      this.eyeDir
+    );
+
+    // 用于记录 轴  以及中心点在 XOZ平面的坐标
+    const v1 = new Vector3();
+    const v2 = new Vector3();
+    const plane = new Plane(new Vector3(0, 1, 0));
+    ray.intersectPlane(plane, v1);
+    ray2.intersectPlane(plane, v2);
+
+    return v1.clone().sub(v2);
+  }
+
+  // 辅助线
+  helpLine(vec: Vector3, vec2: Vector3) {
+    const material = new LineBasicMaterial({
+      color: 0xff0000,
+    });
+
+    const points = [];
+    points.push(vec2);
+    points.push(vec);
+    const geometry = new BufferGeometry().setFromPoints(points);
+    const line = new Line(geometry, material);
+    this.renderLayer.scene.add(line);
   }
 
   /**
