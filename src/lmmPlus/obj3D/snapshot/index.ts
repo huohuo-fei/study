@@ -38,11 +38,14 @@ export class Snapshot {
   addSnapshot(data:snapshotType){
     this.geoSnapshot.add(data)
     this.baserRender.isForceRenderBg = true
+    this.baserRender.dispatchEvent({type:'changeSnapshot',value:this.geoSnapshot.size})
   }
 
   removeSnapshot(data:snapshotType){
     this.geoSnapshot.delete(data)
     this.baserRender.isForceRenderBg = true
+    this.baserRender.dispatchEvent({type:'changeSnapshot',value:this.geoSnapshot.size})
+
   }
 
 /**

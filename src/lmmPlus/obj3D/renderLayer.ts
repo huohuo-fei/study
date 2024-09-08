@@ -157,6 +157,27 @@ export class RenderLayer extends Receiver {
     this.eventType = mode;
   }
 
+  onSendDisactive(){
+    this.dispatchEvent({type:'disActiveObj'})
+  }
+  onSendSwitchMode(mode:eventType){
+    this.changeMode(mode)
+    this.dispatchEvent({
+      type: 'switchGeoMode',
+      mode,
+    });
+  }
+  onSendActiveObj(){
+    this.dispatchEvent({
+      type: 'activeObj',
+    });
+  }
+  onSendDisActiveObj(){
+    this.dispatchEvent({
+      type: 'disActiveObj',
+    });
+  }
+
   registerEvent() {
     this.addEventListener('switchMode', (event) => {
       if (event.mode) {

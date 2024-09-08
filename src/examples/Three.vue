@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineProps, onMounted, ref } from 'vue';
+import { computed, defineProps, onMounted, ref } from 'vue';
 import { RenderApp } from '../lmmPlus/obj3D';
 import { eventType } from '../lmmPlus/driver';
 import { RenderLayer } from '../lmmPlus/obj3D/renderLayer';
@@ -17,6 +17,8 @@ const props = defineProps({
 const canvasContainer = ref<HTMLCanvasElement>();
 const renderKit = RenderApp;
 let renderLayer: RenderLayer;
+const snapshotLength = ref(0)
+const disActiveObj = ref(false)
 
 function initRenderLayer() {
   renderLayer = renderKit.createDrawCtx(
@@ -28,6 +30,16 @@ function initRenderLayer() {
     if (event.mode) {
       actMode.value = typeMap.get(event.mode);
     }
+  });
+  renderLayer.addEventListener('changeSnapshot', (event) => {
+    snapshotLength.value = event.value
+  });
+  // disActiveObj
+  renderLayer.addEventListener('disActiveObj', (event) => {
+    disActiveObj.value = true
+  });
+  renderLayer.addEventListener('activeObj', (event) => {
+    disActiveObj.value = false
   });
 }
 
@@ -55,6 +67,7 @@ const typeMap = new Map<eventType, geoMode>([
 
 const actMode = ref(typeMap.get(eventType.draw3D));
 const switchMode = (mode: eventType) => {
+  if(actMode.value === typeMap.get(mode))return
   actMode.value = typeMap.get(mode);
   renderLayer.dispatchEvent({ type: 'switchMode', mode });
 };
@@ -72,6 +85,10 @@ const changeFillColor = (none?: string) => {
   const newFillColor = `rgb(${r},${g},${b})`;
   renderLayer.dispatchEvent({ type: 'changeFillColor', color: newFillColor });
 };
+
+const disAbleControl = computed(() => {
+  return actMode.value === typeMap.get(eventType.draw3D) || disActiveObj.value
+})
 /** 模式下的操作 E */
 </script>
 
@@ -84,14 +101,14 @@ const changeFillColor = (none?: string) => {
     ></div>
     <div class="side">
       <button class="btn" @click="switchMode(eventType.draw3D)">draw</button>
-      <button class="btn" @click="switchMode(eventType.resize3D)">
+      <button class="btn" @click="switchMode(eventType.resize3D)" :disabled="disAbleControl">
         resize
       </button>
-      <button class="btn" @click="switchMode(eventType.rotate3D)">
+      <button class="btn" @click="switchMode(eventType.rotate3D)" :disabled="disAbleControl">
         rotate
       </button>
-      <button class="btn" @click="switchMode(eventType.fill3D)">fill</button>
-      <button class="btn" @click="switchMode(eventType.select)">select</button>
+      <button class="btn" @click="switchMode(eventType.fill3D)" :disabled="disAbleControl">fill</button>
+      <button class="btn" @click="switchMode(eventType.select)" :disabled="snapshotLength ===0">select</button>
 
       <p>当前模式：{{ actMode }}</p>
       <template v-if="actMode === typeMap.get(eventType.fill3D)">

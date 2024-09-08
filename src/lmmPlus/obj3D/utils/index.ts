@@ -112,6 +112,7 @@ export function getObjByPoint(
 
 // 销毁内存中的对象
 export function destroyObj(obj: any) {
+  if(!obj)return
   obj.traverse((obj: any) => {
     if (obj.isGroup) {
       // 如果时 group 需要遍历

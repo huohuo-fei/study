@@ -90,15 +90,23 @@ export class GeoBase {
 
   createGeo() {
     this.originGroup = this.geoObj.createGeo();
+    this.buildGeo()
+  }
+
+  createDefaultGeo(startPoint: Vector3,endPoint:Vector3){
+    if(!this.geoObj){
+      this.setGeoObj(GeoType.cube)
+    }
+    this.originGroup = this.geoObj.createDefaultGeo(startPoint,endPoint)
+    this.buildGeo()
+    
+  }
+  buildGeo(){
     this.originGroup && this.renderLayer.scene.add(this.originGroup);
-    // this.renderLayer.resizeCon.registerControl(this.geoObj);
     this.renderLayer.rotateCon.registerControl(this.geoObj);
-    this.renderLayer.baseLayer.changeMode(eventType.rotate3D);
-    this.renderLayer.baseLayer.dispatchEvent({
-      type: 'switchGeoMode',
-      mode: eventType.rotate3D,
-    });
+    this.renderLayer.baseLayer.onSendSwitchMode(eventType.rotate3D)
     this.removeObj();
+    this.renderLayer.baseLayer.onSendActiveObj()
   }
 
   // 旋转几何体 并更新相应的虚线
@@ -135,6 +143,17 @@ export class GeoBase {
     }else if(mode === eventType.fill3D){
       this.renderLayer.rotateCon.destroyControl(this.geoObj);
       this.renderLayer.resizeCon.destroyControl(this.geoObj);
+    }else if(mode === eventType.draw3D){
+      if(this.originGroup){
+        this.renderLayer.transformControl.destroyTransformGroup()
+        this.convertSnapshot()
+      }
+    }else if(mode === eventType.select){
+      // 切换为 select 模式 如果当前有几何体 则 输出图片
+      if(this.originGroup){
+        this.convertSnapshot()
+      }
+      
     }
     this.renderLayer.transformControl.destroyTransformGroup()
   }
@@ -173,6 +192,7 @@ export class GeoBase {
       } 
       this.clearObj()
       this.renderLayer.baseLayer.cacheSnapshot.addSnapshot(snapshotData)
+      this.renderLayer.baseLayer.onSendDisActiveObj()
     })
   }
 
@@ -186,6 +206,7 @@ export class GeoBase {
       this.renderLayer.baseLayer.cacheSnapshot.removeSnapshot(snapshotData)
       this.showFrame()
       this.geoObj.updateDash()
+      this.renderLayer.baseLayer.onSendActiveObj()
     })
     
   }
@@ -197,14 +218,9 @@ export class GeoBase {
     this.removeControl()
     const circlePointsArr = this.geoObj.getMinSize()
     const minBox = converCanvas2(circlePointsArr, this.renderLayer.camera, this.renderLayer.canvas)
-
     // 检测两个点 与 地板的焦点 并绘制一个矩形框
     this.renderLayer.transformControl.initLineRect(minBox)
-    this.renderLayer.baseLayer.setMode(eventType.select)
-    this.renderLayer.baseLayer.dispatchEvent({
-      type: 'switchGeoMode',
-      mode: eventType.select,
-    });
+    this.renderLayer.baseLayer.onSendSwitchMode(eventType.select)
   }
 
   // 清空数据

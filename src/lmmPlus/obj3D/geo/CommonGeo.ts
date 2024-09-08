@@ -116,6 +116,9 @@ class CommonGeo {
   createGeo() {
     return new Group();
   }
+  createDefaultGeo(startPoint:Vector3,endPoint: Vector3){
+    return new Group();
+  }
   updateDash() {}
 
   // 绘制线框  -- 主要是绘制底部线框 拉伸的高度为零

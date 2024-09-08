@@ -181,6 +181,8 @@ class ResizeControl extends Receiver {
     this.w = width;
     this.h = height;
     this.d = depth;
+    console.log(width, height, depth,'width, height, depth,');
+    
     this.initResize();
     this.lineMesh && this.resizeGroup.add(this.lineMesh);
     this.resizeGroup.renderOrder = TOP_RENDER_ORDER + 1;
