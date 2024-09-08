@@ -4,7 +4,8 @@ import { ThreeLayer } from '../ThreeLayer';
 import { customEvent } from '../../driver';
 import { Group, Points, Vector2, Vector3 } from 'three';
 import { createPoint } from '../utils/point';
- class DrawControl extends Receiver {
+import { MIN_BOTTOM_LENGTH } from '../threeSystem/const';
+class DrawControl extends Receiver {
   renderLayer: ThreeLayer;
   // 是否处于绘制模式  -- 只有在绘制底部线框以及拉伸高度时，为true
   isDraw: boolean = false;
@@ -17,7 +18,8 @@ import { createPoint } from '../utils/point';
   // 两个圆点
   pointMesh1: Points | null = null;
   pointMesh2: Points | null = null;
-  movePoint:number[] = []
+  movePoint: number[] = [];
+  mistakePoint: number[] = [];
   constructor(renderLayer: ThreeLayer) {
     super();
     this.renderLayer = renderLayer;
@@ -53,6 +55,7 @@ import { createPoint } from '../utils/point';
       );
       this.pointMesh1 = pointMesh;
       this.renderLayer.scene.add(pointMesh);
+      this.mistakePoint.push(customEvent.x, customEvent.y);
     }
   }
   onPointermove(event: PointerEvent, customEvent: customEvent): void {
@@ -71,10 +74,7 @@ import { createPoint } from '../utils/point';
         this.renderLayer.camera,
         this.renderLayer.floorPlank
       );
-      this.renderLayer.geoBase.drawBottomLine(
-        this.bottomPointStart,
-        pointPos,
-      );
+      this.renderLayer.geoBase.drawBottomLine(this.bottomPointStart, pointPos);
     } else {
       // 拉伸底面线框
       this.renderLayer.geoBase.drawStretchLine([x, y], this.stretchPointStart);
@@ -100,6 +100,7 @@ import { createPoint } from '../utils/point';
       );
       this.pointMesh2 = pointMesh;
       this.renderLayer.scene.add(pointMesh);
+      this.mistakeTouchDrawBottomLine(customEvent.x, customEvent.y);
     }
   }
 
@@ -114,11 +115,38 @@ import { createPoint } from '../utils/point';
     this.renderLayer.scene.remove(this.pointMesh2 as Points);
 
     this.bottomPointStart = new Vector3();
-    this.stretchPointStart = []
+    this.stretchPointStart = [];
     this.pointMesh1 = null;
     this.pointMesh2 = null;
   }
 
+  // 防止误触
+  mistakeTouchDrawBottomLine(upx: number, upy: number) {
+    const { mistakePoint } = this;
+    const deltaX = upx - mistakePoint[0];
+    const deltaY = upy - mistakePoint[1];
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+    if (distance < MIN_BOTTOM_LENGTH) {
+      const [x, y] = converCoordinateTo3D(
+        upx,
+        upy,
+        this.renderLayer.width,
+        this.renderLayer.height
+      );
+      const pointPos = getPointOfFloor(
+        x,
+        y,
+        this.renderLayer.camera,
+        this.renderLayer.floorPlank
+      );
+      this.renderLayer.geoBase.createDefaultGeo(this.bottomPointStart,pointPos)
+      this.isDraw = false
+      this.removeObj();
+    }
+    this.mistakePoint = []
+
+  }
 }
 
 export { DrawControl };

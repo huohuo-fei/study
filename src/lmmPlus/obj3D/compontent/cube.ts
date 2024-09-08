@@ -24,7 +24,14 @@ import {
   Matrix4,
   Quaternion,
 } from 'three';
-import { DASH_SIZE, GAP_SIZE } from './const/boxConst';
+import {
+  DASH_SIZE,
+  DEFAULT_SIZE_D,
+  DEFAULT_SIZE_H,
+  DEFAULT_SIZE_W,
+  GAP_SIZE,
+  MIN_SIZE_H,
+} from './const/boxConst';
 import { CommonGeo } from '../geo/CommonGeo';
 import {
   DEFAULT_STRETCH,
@@ -205,8 +212,23 @@ export class Cube extends CommonGeo {
   createGeo() {
     this.width = Math.abs(this.upPoint.x - this.downPoint.x);
     this.depth = Math.abs(this.upPoint.z - this.downPoint.z);
-    this.dirHeight = this.height;
-    this.height = Math.abs(this.height);
+    if (Math.abs(this.height) < MIN_SIZE_H) {
+      this.dirHeight = 0;
+      this.height = MIN_SIZE_H;
+    } else {
+      this.dirHeight = this.height;
+      this.height = Math.abs(this.height);
+    }
+    return this.buildGeoBySize();
+  }
+
+  createDefaultGeo(startPoint: Vector3, endPoint: Vector3) {
+    this.downPoint.copy(startPoint);
+    this.upPoint.copy(endPoint);
+    this.width = DEFAULT_SIZE_W;
+    this.height = DEFAULT_SIZE_H;
+    this.depth = DEFAULT_SIZE_D;
+    this.dirHeight = 0;
     return this.buildGeoBySize();
   }
   buildGeoBySize(position?: Vector3, quaternion?: Quaternion, metaData?: any) {
@@ -521,7 +543,7 @@ export class Cube extends CommonGeo {
     }
 
     // 寻找到最新的虚线后  立马同步最新的间距  -- 优化空间，只有换了虚线才触发
-    this.scaleTotalByValue(0)
+    this.scaleTotalByValue(0);
   }
   // 每次寻找虚线之前，需要根据原始的点 生成一份世界坐标系下的点
   getWorldPoint(resourceData: number[]) {
@@ -693,15 +715,19 @@ export class Cube extends CommonGeo {
 
   /**
    * 解析数据，还原几何体 ，，这里做了重置操作，还原后的数据，缩放值为1
-   * @param obj 
-   * @param metaData 
-   * @returns 
+   * @param obj
+   * @param metaData
+   * @returns
    */
   parseData(obj: any, metaData: any) {
     const { width, depth, height } = obj.children[0].geometry.parameters;
     this.width = width * obj.scale.x;
     this.depth = depth * obj.scale.z;
     this.height = height * obj.scale.y;
-    return this.buildGeoBySize(obj.position as Vector3, obj.quaternion,metaData);
+    return this.buildGeoBySize(
+      obj.position as Vector3,
+      obj.quaternion,
+      metaData
+    );
   }
 }
