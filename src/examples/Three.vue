@@ -3,6 +3,7 @@ import { computed, defineProps, onMounted, ref } from 'vue';
 import { RenderApp } from '../lmmPlus/obj3D';
 import { eventType } from '../lmmPlus/driver';
 import { RenderLayer } from '../lmmPlus/obj3D/renderLayer';
+import { useRouter } from 'vue-router';
 
 const props = defineProps({
   size: {
@@ -14,6 +15,7 @@ const props = defineProps({
     default: eventType.draw3D,
   },
 });
+const router = useRouter()
 const canvasContainer = ref<HTMLCanvasElement>();
 const renderKit = RenderApp;
 let renderLayer: RenderLayer;
@@ -97,7 +99,6 @@ const disAbleControl = computed(() => {
     <div
       ref="canvasContainer"
       class="canvas-container"
-      :style="{ width: size.width - 200 + 'px', height: size.height + 'px' }"
     ></div>
     <div class="side">
       <button class="btn" @click="switchMode(eventType.draw3D)">draw</button>
@@ -115,6 +116,8 @@ const disAbleControl = computed(() => {
         <button class="btn" @click="changeFillColor()">切换颜色</button>
         <button class="btn" @click="changeFillColor('none')">清空颜色</button>
       </template>
+      <hr/>
+      <button class="btn" @click="router.replace('/')">Home</button>
     </div>
   </div>
 </template>
@@ -141,6 +144,8 @@ const disAbleControl = computed(() => {
 }
 .canvas-container {
   position: relative;
+  width: 100%;
+  height: 100%;
 }
 
 .canvas-container canvas {
@@ -148,4 +153,10 @@ const disAbleControl = computed(() => {
   top: 0;
   left: 0;
 }
+
+hr{
+box-sizing: border-box;
+margin-right: 10px;
+}
+
 </style>

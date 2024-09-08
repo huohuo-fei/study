@@ -6,7 +6,6 @@ const size = ref<{ width: number | undefined; height: number | undefined }>({
   width: 0,
   height: 0,
 });
-const threeMode = ref<eventType>(eventType.draw3D);
 onMounted(() => {
   const container = containerRef.value;
   size.value.width = container?.clientWidth;
@@ -16,7 +15,7 @@ onMounted(() => {
 
 <template>
   <div id="container" ref="containerRef">
-    <router-view :size="size" :three-mode="threeMode"></router-view>
+    <router-view :size="size"></router-view>
   </div>
   <!-- <div class="side">
     <div class="nav">

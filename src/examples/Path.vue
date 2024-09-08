@@ -11,6 +11,7 @@ import { Object2D } from '../lmmPlus/objects/Object2D';
 import { Matrix3 } from '../lmmPlus/math/Matrix3';
 import { TransformControler } from '../lmmPlus/controler/TransformControler';
 import { Path } from '../lmmPlus/objects/Path';
+import { useRouter } from 'vue-router';
 
 const props = defineProps({
   size: {
@@ -18,6 +19,7 @@ const props = defineProps({
     default: { width: 0, height: 0 },
   },
 });
+const router = useRouter()
 const canvasRef = ref<HTMLCanvasElement>();
 const scene = new Scene();
 const orbi = new OrbitControler(scene.camera, {});
@@ -133,6 +135,9 @@ const currentModel = ref<optModel>(optModel.draw);
       @click="currentModel = optModel.select"
     >
       select
+    </button>
+    <button @click="router.replace('/')" >
+      Home
     </button>
   </div>
 </template>
