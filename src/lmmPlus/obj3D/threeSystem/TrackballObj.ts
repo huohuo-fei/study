@@ -12,7 +12,6 @@ import {
 } from 'three';
 import { converCoordinateTo3D, getPointOfFloor } from '../utils';
 import { ThreeLayer } from '../ThreeLayer';
-import scene from './scene';
 
 export default class TrackballObj  {
   // 按下鼠标的 和 对应的模式
@@ -46,6 +45,7 @@ export default class TrackballObj  {
   emitControlChange: (() => void) | undefined;
   pi2: number = Math.PI * 2;
   quaternion: Quaternion = new Quaternion();
+  cameraQuatern: Quaternion = new Quaternion();
   rotateAxis: Vector3 | null | undefined;
   floorPlank: Mesh;
   fixAxis: string = 'none'; // axis_y axis_x axis_z
@@ -107,7 +107,7 @@ export default class TrackballObj  {
     dragEnd.set(PointX, PointY);
     const quaternion = this.rotate(dragEnd.clone().sub(dragStart));
     dragStart.copy(dragEnd); /*  */
-    return quaternion;
+    return {quaternion,cameraQuatern:this.cameraQuatern};
   }
   pointerup() {
     this.state = 'none';
@@ -215,6 +215,8 @@ export default class TrackballObj  {
 
     }
     this.quaternion.setFromAxisAngle(axis.normalize(), angle);
+    this.cameraQuatern.setFromAxisAngle(axis.normalize().multiplyScalar(-1), angle);
+    // this.update()
     return this.quaternion;
   }
 
@@ -243,7 +245,6 @@ export default class TrackballObj  {
     // spherical.setFromVector3(camera.position.clone().sub(target));
     panOffset.set(0, 0, 0);
     this.quaternion.setFromRotationMatrix(new Matrix4());
-    this.emitControlChange && this.emitControlChange();
   }
 
   getPvMatrix() {

@@ -7,6 +7,7 @@ import {
   Group,
   OrthographicCamera,
   Object3D,
+  Quaternion,
 } from 'three';
 import { ThreeLayer } from '../ThreeLayer';
 // 几何体的基类  -- 这里提供了每个几何体需要有的方法
@@ -119,7 +120,8 @@ class CommonGeo {
   createDefaultGeo(startPoint:Vector3,endPoint: Vector3){
     return new Group();
   }
-  updateDash() {}
+  updateDash(quaternion?:Vector3) {}
+  updateDash2(params:any) {}
 
   // 绘制线框  -- 主要是绘制底部线框 拉伸的高度为零
   drawBottom(startPoint: Vector3, endPoint: Vector3): Group | null {

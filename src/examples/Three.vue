@@ -4,6 +4,7 @@ import { RenderApp } from '../lmmPlus/obj3D';
 import { eventType } from '../lmmPlus/driver';
 import { RenderLayer } from '../lmmPlus/obj3D/renderLayer';
 import { useRouter } from 'vue-router';
+import {GeoType} from '../lmmPlus/obj3D/renderLayer' 
 
 const props = defineProps({
   size: {
@@ -92,6 +93,12 @@ const disAbleControl = computed(() => {
   return actMode.value === typeMap.get(eventType.draw3D) || disActiveObj.value
 })
 /** 模式下的操作 E */
+
+const geoType = ref<GeoType>(GeoType.cube)
+const changeGeoType = (event:Event) =>{
+  geoType.value = ((event.target as HTMLInputElement).value) as GeoType
+  renderLayer.dispatchEvent({ type: 'switchGeoType', value:geoType.value });
+}
 </script>
 
 <template>
@@ -101,6 +108,11 @@ const disAbleControl = computed(() => {
       class="canvas-container"
     ></div>
     <div class="side">
+    <select :value="geoType" @change="changeGeoType">
+      <option :value="GeoType.cube">立方体</option>
+      <option :value="GeoType.cylinder">圆柱体</option>
+      <option :value="GeoType.cone">圆锥体</option>
+    </select>
       <button class="btn" @click="switchMode(eventType.draw3D)">draw</button>
       <button class="btn" @click="switchMode(eventType.resize3D)" :disabled="disAbleControl">
         resize

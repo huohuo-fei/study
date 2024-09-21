@@ -48,6 +48,10 @@ const routes = [
     path:'/test-three',
     component:() => import('../examples/Three.vue')
   },
+  {
+    path:'/transform',
+    component:() => import('../blog/Transform.vue')
+  },
 ]
 
 const router = createRouter({

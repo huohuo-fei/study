@@ -11,10 +11,12 @@ import { Snapshot } from './snapshot';
 
 export enum GeoType {
   cube = 'cube',
+  cone='cone',
+  cylinder='cylinder'
 }
 export class RenderLayer extends Receiver {
   threeLayer: ThreeLayer;
-  type: GeoType = GeoType.cube;
+  geoType: GeoType = GeoType.cylinder;
   geoBase?: GeoBase;
   uiCanvas: HTMLCanvasElement;
   topCanvas: HTMLCanvasElement;
@@ -190,5 +192,11 @@ export class RenderLayer extends Receiver {
         this.threeLayer.fillCon.changeColor(event.color);
       }
     });
+    this.addEventListener('switchGeoType',(event) => {
+      if(event.value){
+        console.log(event.value,'event.value');
+        this.geoType = event.value
+      }
+    })
   }
 }
