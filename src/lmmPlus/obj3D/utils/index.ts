@@ -1,5 +1,8 @@
 import {
+  BufferGeometry,
   Group,
+  LineBasicMaterial,
+  LineSegments,
   Mesh,
   OrthographicCamera,
   Raycaster,
@@ -272,3 +275,12 @@ export const createCacheCanvas = (
     );
   });
 };
+
+export function createBufferLine(points:Vector3[]){
+  const material = new LineBasicMaterial({
+    color: '#ffffff',
+  });
+    const geo = new BufferGeometry().setFromPoints(points)
+    const line = new LineSegments(geo,material)
+    return line
+}

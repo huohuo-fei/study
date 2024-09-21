@@ -23,10 +23,11 @@ import {
   MeshBasicMaterial,
   Quaternion,
   Euler,
-  AxesHelper,
   MathUtils,
   Plane,
   PlaneHelper,
+  Object3D,
+  Object3DEventMap,
 } from 'three';
 import { CommonGeo } from '../geo/CommonGeo';
 // 圆柱体特有的变量
@@ -48,6 +49,7 @@ import {
   UN_UPDATE_RESIZE_CONTROL,
 } from '../threeSystem/const';
 import { ThreeLayer } from '../ThreeLayer';
+import { createBufferLine } from '../utils';
 
 /* 圆柱和圆锥 基本架构都一样  复制过来的 */
 export class Cylinder extends CommonGeo {
@@ -69,43 +71,26 @@ export class Cylinder extends CommonGeo {
   vertical_geo: null | BufferGeometry = null;
   vertical_line: null | LineSegments = null;
   rotate_x!: number;
-  rotate_y!: number;
   top_geo!: CircleGeometry;
   top_lineSegments!: LineSegments;
   lineMesh!: Mesh;
-  sideRotate!: Matrix4;
   downPoint: Vector3 = new Vector3();
   upPoint: Vector3 = new Vector3();
   dirHeight: number = 0;
-  vCameraPosition: Vector3;
-  axesHelper: AxesHelper;
-  middlePlaneHelper: Object3D<Object3DEventMap>;
+  middlePlaneHelper: Object3D<Object3DEventMap> | null = null;
   middlePlane: Plane | null = null;
-  constructor(renderLayer: ThreeLayer) {
-    super(renderLayer);
-    this.getRotate(this.camera);
-    this.vCameraPosition = this.camera.position.clone()
-    this.axesHelper = new AxesHelper(1);
 
+  // 生成圆柱几何体的侧边
+  threeSideLine:Mesh|null = null
+  posMatrix: Matrix4 = new Matrix4();
+  constructor(renderLayer:ThreeLayer){
+    super(renderLayer)
+    this.getRotate(this.camera)
   }
-
-  // 获取相机的旋转信息   轴信息  -- 弧度表示
-  getRotate(camera: OrthographicCamera) {
-    this.rotate_x = camera.rotation.x;
-    // const { x, z } = camera.position;
-    // this.rotate_y = Math.atan2(x, z);
-
-    const deltaX = this.downPoint.x
-    const deltaZ = this.downPoint.z 
-    const dy = this.dirHeight / 2
-const pos = new Vector3(deltaX,dy,deltaZ) .multiplyScalar(-1)
-const totalVec = pos.add(camera.position)
-const { x, z } = totalVec
-this.rotate_y = Math.atan2(x, z);
-this.vCameraPosition = totalVec.clone()
-
-
-  }
+    // 获取相机的旋转信息   轴信息  -- 弧度表示
+    getRotate(camera: OrthographicCamera) {
+      this.rotate_x = camera.rotation.x;
+    }
 
   // 绘制底部线框
   drawBottom(startPoint: Vector3, endPoint: Vector3) {
@@ -271,17 +256,20 @@ this.vCameraPosition = totalVec.clone()
     // 组合
     this.originGroup = new Group();
     this.originGroup.add(this.realGeo);
-    // this.originGroup.add(this.lineMesh);
     this.originGroup.add(this.lineMesh)
     this.originGroup.name = 'cylinderBox';
-    this.testPlane()
+    this.transformGeo()
+    this.createMiddlePlane()
     return this.originGroup;
   }
 
-  testPlane(){
+  /**
+   * 构建一个平行于 XOZ的平面
+   */
+  createMiddlePlane(){
     this.middlePlane = new Plane(new Vector3(0,1,0))
-    this.middlePlaneHelper = new PlaneHelper(this.middlePlane,2,0xffff00)
-    this.originGroup?.add(this.middlePlaneHelper)
+    // this.middlePlaneHelper = new PlaneHelper(this.middlePlane,2,0xffff00)
+    // this.renderLayer.scene.add(this.middlePlaneHelper)
   }
 
   // 将边缘线框  转为普通的线框 使用 bufferGeomrty
@@ -289,53 +277,12 @@ this.vCameraPosition = totalVec.clone()
     // 获取所有顶点
     const vertices = edges.attributes.position.array;
     const circle_1 = vertices.slice(0, vertices.length / 2);
-
-    // 两条侧边   -- 对于侧边 需要应用相机的变化
-    const material2 = new LineBasicMaterial({ color: LINE_INIT_COLOR });
-
-    const points1 = [
-      new Vector3(this.radius, -this.height / 2, 0),
-      new Vector3(this.radius, this.height / 2, 0),
-    ];
-    const points2 = [
-      new Vector3(-this.radius, -this.height / 2, 0),
-      new Vector3(-this.radius, this.height / 2, 0),
-    ];
-
-    const geo3 = new BufferGeometry().setFromPoints(points1);
-    const side1 = new Line(geo3, material2);
-    const geo4 = new BufferGeometry().setFromPoints(points2);
-    const side2 = new Line(geo4, material2);
-
-    // 保存侧边的组
-    const sideMesh = new Mesh();
-    sideMesh.add(side1);
-    sideMesh.add(side2);
     // 保存上下两个圆形的组
     const circles = this.searchDash(circle_1);
-
     // 保存整个线框的组
     const lineMesh = new Mesh();
-    // 保存旋转矩阵 将相机绕着Y轴旋转的量 应用于 线框，保证线框一直正对着相机
-    // const rotateMatrixY = new Matrix4().makeRotationY(this.rotate_y);
-    // this.sideRotate = new Matrix4().multiply(rotateMatrixY);
-    // lineMesh.applyMatrix4(this.sideRotate);
-    // lineMesh.add(this.axesHelper)
-    this.sideRotate = new Matrix4()
-
-
     lineMesh.add(circles);
-    lineMesh.add(sideMesh);
     return lineMesh;
-  }
-
-  helpTest(){
-    const quaternion = new Quaternion()
-    setInterval(() =>{
-      const axis_y = new Vector3(0,1,0)
-      quaternion.setFromAxisAngle(axis_y,Math.PI / 18)
-      this.lineMesh.applyQuaternion(quaternion)
-    },2000)
   }
 
   // 寻找虚线  -- 这里的思路是 ：将圆 分为两个圆弧绘制 根据条件 让某个圆弧的材质变为虚线
@@ -399,101 +346,62 @@ this.vCameraPosition = totalVec.clone()
     } else {
       const deltaX = this.downPoint.x
       const deltaZ = this.downPoint.z 
-      this.originGroup!.translateX(deltaX);
-      this.originGroup!.translateZ(deltaZ);
-      this.originGroup!.translateY(this.dirHeight / 2);
+      // this.originGroup!.translateX(deltaX);
+      // this.originGroup!.translateZ(deltaZ);
+      // this.originGroup!.translateY(this.dirHeight / 2);
+      const posMatrix = new Matrix4().makeTranslation(deltaX,this.dirHeight / 2,deltaZ)
+      this.originGroup?.applyMatrix4(posMatrix)
+      this.posMatrix?.copy(posMatrix)
     }
   }
 
-  // 相机变化 -- 更新侧边线框
-  updateDash(oldPos?:Vector3) { // vCameraPosition
-    const { x, z } = oldPos as Vector3
-    const rotateY = Math.atan2(x, z);
-    const invertMatrix = this.sideRotate.clone().invert();
-    this.sideRotate  =  new Matrix4().makeRotationY(rotateY)
-    this.lineMesh.applyMatrix4(invertMatrix);
-    this.lineMesh.applyMatrix4(this.sideRotate);
-
-    const toplineMesh = this.lineMesh.getObjectByName(CIRCLE_TOP_LINE);
-    const bottomlineMesh = this.lineMesh.getObjectByName(CIRCLE_BOTTOM_LINE);
-    // 根据相机的位置  动态切换显示的虚线
-    let cancelDashObj;
-    let setDashObj;
-
-    if (oldPos!.y > 0) {
-      // 俯视 取消虚线的是 bottom
-      cancelDashObj = toplineMesh;
-      setDashObj = bottomlineMesh;
-    } else {
-      cancelDashObj = bottomlineMesh;
-      setDashObj = toplineMesh;
+  // 旋转时，同步更新几何体的边界线 以及 虚线
+  // TODO: 优化渲染，不要将侧边线框，单独添加到scene,几何体作为一个统一的整体，需要包含线框
+  updateDash(quaternion: Quaternion,plane:Plane,axis_y_rotate?:Quaternion) {
+    if(!axis_y_rotate){
+      axis_y_rotate = new Quaternion()
     }
-    const childMeshCancel = cancelDashObj?.children[0] as Line;
-    const childMeshDash = setDashObj?.children[0] as Line;
+    // 先将旋转量同步到平面上
+    const rotateMatrix = new Matrix4().makeRotationFromQuaternion(quaternion);
+    this.middlePlane!.applyMatrix4(rotateMatrix);
+    const originCenter = this.calcIntersectionDir(plane)
+    const centerPos = originCenter.clone().applyMatrix4(this.posMatrix)
+    const centerPos2 = originCenter.clone().multiplyScalar(-1).applyMatrix4(this.posMatrix)
+    // 通过线段中点，计算线段的端点
+    const newY = new Vector3(0,1,0).applyQuaternion(axis_y_rotate).normalize()
+    const halfH = this.height / 2
+    const p1 = centerPos.clone().add(newY.clone().multiplyScalar(halfH))
+    const p2 = centerPos.clone().sub(newY.clone().multiplyScalar(halfH))
+    const p3 = centerPos2.clone().add(newY.clone().multiplyScalar(halfH))
+    const p4 = centerPos2.clone().sub(newY.clone().multiplyScalar(halfH))
 
-    // 检测 需要取消虚线的边框  是否为虚线  如果不是 那么不用做任何操作  -- 优化操作
-    if (childMeshCancel.material instanceof LineDashedMaterial) {
-      // 需要将虚线显示在bottom
-      childMeshCancel.material.dispose();
-      childMeshCancel.material = new LineBasicMaterial({
-        color: LINE_INIT_COLOR,
-      });
-
-      (childMeshDash.material as MeshBasicMaterial).dispose();
-      childMeshDash.material = new LineDashedMaterial({
-        color: LINE_DASH_INIT_COLOR,
-        linewidth: 1,
-        scale: 1,
-        dashSize: DASH_SIZE / this.totalScaleX,
-        gapSize: GAP_SIZE / this.totalScaleX,
-      });
+    if(!this.threeSideLine){
+     const oneLine =  createBufferLine([p1,p2])
+     const twoLine =  createBufferLine([p3,p4])
+     this.threeSideLine = new Mesh()
+     this.threeSideLine.add(oneLine,twoLine)
+     this.renderLayer.scene.add(this.threeSideLine)
+    }else{
+      const line1 = this.threeSideLine.children[0] as Line
+      const line2 = this.threeSideLine.children[1] as Line
+      line1.geometry.setFromPoints([p1,p2])
+      line2.geometry.setFromPoints([p3,p4])
     }
   }
 
-    // 相机变化 -- 更新侧边线框
-    updateDash2(roate:number) { // vCameraPosition
-      // 4. 获取绕 Y 轴的旋转角度
-      const rotateY = roate
-      this.sideRotate = new Matrix4().makeRotationY(-rotateY);
-      this.lineMesh.rotateY(0)
-      this.lineMesh.applyMatrix4(this.sideRotate);
+  // 计算当前视线的垂面 与 平行于模型坐标系XOZ平面的交点 以及方向
+  // 这里的交点一定是世界坐标的圆心，两个面都经过原点，所以只需要知道方向即可
+  calcIntersectionDir(plane:Plane) {
+    // 计算交线方向
+    const direction = new Vector3();
+    // 计算交线的方向向量
+    direction.crossVectors(
+      plane.normal,
+     this.middlePlane!.normal
+    );
+    return direction.normalize().multiplyScalar(this.radius)
+  }
 
-      // const toplineMesh = this.lineMesh.getObjectByName(CIRCLE_TOP_LINE);
-      // const bottomlineMesh = this.lineMesh.getObjectByName(CIRCLE_BOTTOM_LINE);
-      // // 根据相机的位置  动态切换显示的虚线
-      // let cancelDashObj;
-      // let setDashObj;
-  
-      // if (1 > 0) {
-      //   // 俯视 取消虚线的是 bottom
-      //   cancelDashObj = toplineMesh;
-      //   setDashObj = bottomlineMesh;
-      // } else {
-      //   cancelDashObj = bottomlineMesh;
-      //   setDashObj = toplineMesh;
-      // }
-      // const childMeshCancel = cancelDashObj?.children[0] as Line;
-      // const childMeshDash = setDashObj?.children[0] as Line;
-  
-      // // 检测 需要取消虚线的边框  是否为虚线  如果不是 那么不用做任何操作  -- 优化操作
-      // if (childMeshCancel.material instanceof LineDashedMaterial) {
-      //   // 需要将虚线显示在bottom
-      //   childMeshCancel.material.dispose();
-      //   childMeshCancel.material = new LineBasicMaterial({
-      //     color: LINE_INIT_COLOR,
-      //   });
-  
-      //   (childMeshDash.material as MeshBasicMaterial).dispose();
-      //   childMeshDash.material = new LineDashedMaterial({
-      //     color: LINE_DASH_INIT_COLOR,
-      //     linewidth: 1,
-      //     scale: 1,
-      //     dashSize: DASH_SIZE / this.totalScaleX,
-      //     gapSize: GAP_SIZE / this.totalScaleX,
-      //   });
-      // }
-      
-    }
 
   /**
    * 获取圆锥 计算最小包围盒所需的所有顶点数据

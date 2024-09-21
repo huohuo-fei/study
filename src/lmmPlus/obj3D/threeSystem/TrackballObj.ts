@@ -107,7 +107,7 @@ export default class TrackballObj  {
     dragEnd.set(PointX, PointY);
     const quaternion = this.rotate(dragEnd.clone().sub(dragStart));
     dragStart.copy(dragEnd); /*  */
-    return {quaternion,cameraQuatern:this.cameraQuatern};
+    return quaternion
   }
   pointerup() {
     this.state = 'none';
@@ -215,8 +215,6 @@ export default class TrackballObj  {
 
     }
     this.quaternion.setFromAxisAngle(axis.normalize(), angle);
-    this.cameraQuatern.setFromAxisAngle(axis.normalize().multiplyScalar(-1), angle);
-    // this.update()
     return this.quaternion;
   }
 

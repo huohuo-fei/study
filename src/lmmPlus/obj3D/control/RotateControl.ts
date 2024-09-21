@@ -174,11 +174,11 @@ class RotateControl extends Receiver {
       this.rotateMode === rotateType.trackball ||
       this.rotateMode === rotateType.fixAxis
     ) {
-      const {quaternion,cameraQuatern} = this.renderLayer.trackballObj.pointermove(
+      const quaternion = this.renderLayer.trackballObj.pointermove(
         customEvent.x,
         customEvent.y
       );
-      this.renderLayer.geoBase.rotateGeo(quaternion,cameraQuatern);
+      this.renderLayer.geoBase.rotateGeo(quaternion);
     }
   }
   onPointerup(event: PointerEvent, customEvent: customEvent): void {

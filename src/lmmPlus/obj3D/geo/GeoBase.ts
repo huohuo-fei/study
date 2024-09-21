@@ -12,21 +12,11 @@ import {
 } from '../utils';
 import {
   Group,
-  Mesh,
   Vector3,
-  Points,
   Quaternion,
   ObjectLoader,
   Object3D,
-  Matrix4,
-  Euler,
   Plane,
-  MathUtils,
-  PlaneHelper,
-  BufferGeometry,
-  BufferAttribute,
-  ShaderMaterial,
-  PointsMaterial,
 } from 'three';
 import { CommonGeo } from './CommonGeo';
 import { Vector2 } from '../../math/Vector2';
@@ -47,8 +37,8 @@ export class GeoBase {
   // 几何体实例 -- 后续要扩充为数组  同时有多个几何体
   originGroup!: Group;
   geoType: GeoType | null = null;
-  oldPos: Vector3 = new Vector3();
-  testPlane!: Plane;
+  // 垂直与视线的平面
+  eyeDirVerPlane!: Plane;
   constructor(renderLayer: ThreeLayer) {
     this.renderLayer = renderLayer;
   }
@@ -135,16 +125,16 @@ export class GeoBase {
 
   createGeo() {
     this.originGroup = this.geoObj.createGeo();
-    this.createCameraPos();
+    this.createPlane();
     this.buildGeo();
   }
 
-  // 构造虚拟的相机位置
-  createCameraPos() {
+  // 
+  createPlane() {
     const normalVec = this.renderLayer.camera.position.clone();
-    this.testPlane = new Plane(normalVec, normalVec.length());
-    const planeHelp = new PlaneHelper(this.testPlane, 3, 0xff0000);
-    this.renderLayer.scene.add(planeHelp);
+    this.eyeDirVerPlane = new Plane(normalVec, normalVec.length());
+    // const planeHelp = new PlaneHelper(this.eyeDirVerPlane, 3, 0xff0000);
+    // this.renderLayer.scene.add(planeHelp);
   }
 
   createDefaultGeo(startPoint: Vector3, endPoint: Vector3) {
@@ -156,6 +146,7 @@ export class GeoBase {
   }
   buildGeo() {
     this.originGroup && this.renderLayer.scene.add(this.originGroup);
+    this.rotateGeo(new Quaternion())
     this.renderLayer.rotateCon.registerControl(this.geoObj);
     this.renderLayer.baseLayer.onSendSwitchMode(eventType.rotate3D);
     this.removeObj();
@@ -163,46 +154,12 @@ export class GeoBase {
   }
 
   // 旋转几何体 并更新相应的虚线
-  rotateGeo(quaternion: Quaternion, cameraQuatern: Quaternion) {
+  rotateGeo(quaternion: Quaternion) {
+    const axis_y_rotate = new Quaternion().setFromRotationMatrix(this.originGroup.matrix)
     this.originGroup!.applyQuaternion(quaternion);
-    const m = new Matrix4().makeRotationFromQuaternion(quaternion);
-    this.geoObj!.middlePlane.applyMatrix4(m);
-    // this.geoObj!.midd、、
-
-
-    const newP = this.calcDot();
-    console.log(newP,this.geoObj.width);
-    
-    const meshPoint = createPointC(new Vector3(2,0,0))
-    this.renderLayer.scene.add(meshPoint);
+    this.geoObj.updateDash(quaternion,this.eyeDirVerPlane,axis_y_rotate)
   }
 
-  calcDot() {
-    // 计算交线
-    var intersection = new Vector3();
-    var direction = new Vector3();
-
-    // 计算交线的方向向量
-    direction.crossVectors(
-      this.testPlane.normal,
-      this.geoObj!.middlePlane.normal
-    );
-
-    // 计算交线的点
-    intersection
-      .crossVectors(this.geoObj!.middlePlane.normal, direction)
-      .multiplyScalar(
-        this.geoObj!.middlePlane.constant /
-          this.geoObj!.middlePlane.normal.dot(this.testPlane.normal)
-      );
-    return direction;
-
-    // 现在，intersection 是交线的点，direction 是交线的方向向量
-  }
-
-  buildDot(){
-
-  }
   resizeGeo(dir: string, distance: number) {
     this.geoObj.updateOriginGeo(dir, distance);
   }
@@ -332,43 +289,4 @@ export class GeoBase {
     this.renderLayer.resizeCon.destroyControl(this.geoObj);
     this.renderLayer.render();
   }
-}
-
-// 创建点
-function createPointC(pos:Vector3) {
-
-
-  const vertices = new Float32Array([pos.x, pos.y, pos.z]);
-  const pointGeometry = new BufferGeometry();
-  pointGeometry.setAttribute("position", new BufferAttribute(vertices, 3));
-
-  // 使用自定义着色器 顶点着色器代码
-  const vertexShader = `
-        void main() {
-        // 设置点的位置
-        // projectionMatrix 投影矩阵  viewMatrix 视图矩阵
-        gl_Position = projectionMatrix* viewMatrix  * vec4( position, 1.0 );
-        // 设置点的大小为50像素
-        gl_PointSize = 30.0;
-
-        }
-    `;
-  // 片元着色器代码
-  const fragmentShader = `
-        void main() {
-        // 光栅化片元的颜色 绘制圆形
-        if (distance(gl_PointCoord, vec2(0.5, 0.5)) > 0.5) discard;
-        gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-        }
-    `;
-  // 初始化自定义材质对象
-  const material = new ShaderMaterial({
-    vertexShader: vertexShader,
-    fragmentShader: fragmentShader,
-  });
-  const material2 = new PointsMaterial( { color: 0x888888 } );
-  // const pointMesh = new Points(pointGeometry, material2);
-  const pointMesh = new Points(pointGeometry, material);
-
-  return pointMesh;
 }

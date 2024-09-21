@@ -12,7 +12,7 @@ export default function createCamera(canvas:OffscreenCanvas|HTMLCanvasElement){
     0.1,
     100,
   ];
-  const eye = new Vector3(0, 4, 10);
+  const eye = new Vector3(6, 4, 10);
   const target = new Vector3(0, 0, 0);
 
   const camera = new OrthographicCamera(
