@@ -81,16 +81,19 @@ export class Cylinder extends CommonGeo {
   middlePlane: Plane | null = null;
 
   // 生成圆柱几何体的侧边
-  threeSideLine:Mesh|null = null
+  threeSideLine: Mesh | null = null;
   posMatrix: Matrix4 = new Matrix4();
-  constructor(renderLayer:ThreeLayer){
-    super(renderLayer)
-    this.getRotate(this.camera)
+  newX: Vector3 = new Vector3(-1, 0, 0);
+  oldRotateMatrix: Matrix4 = new Matrix4();
+  flagZ: number = 0;
+  constructor(renderLayer: ThreeLayer) {
+    super(renderLayer);
+    this.getRotate(this.camera);
   }
-    // 获取相机的旋转信息   轴信息  -- 弧度表示
-    getRotate(camera: OrthographicCamera) {
-      this.rotate_x = camera.rotation.x;
-    }
+  // 获取相机的旋转信息   轴信息  -- 弧度表示
+  getRotate(camera: OrthographicCamera) {
+    this.rotate_x = camera.rotation.x;
+  }
 
   // 绘制底部线框
   drawBottom(startPoint: Vector3, endPoint: Vector3) {
@@ -256,18 +259,18 @@ export class Cylinder extends CommonGeo {
     // 组合
     this.originGroup = new Group();
     this.originGroup.add(this.realGeo);
-    this.originGroup.add(this.lineMesh)
+    this.originGroup.add(this.lineMesh);
     this.originGroup.name = 'cylinderBox';
-    this.transformGeo()
-    this.createMiddlePlane()
+    this.transformGeo();
+    this.createMiddlePlane();
     return this.originGroup;
   }
 
   /**
    * 构建一个平行于 XOZ的平面
    */
-  createMiddlePlane(){
-    this.middlePlane = new Plane(new Vector3(0,1,0))
+  createMiddlePlane() {
+    this.middlePlane = new Plane(new Vector3(0, 1, 0));
     // this.middlePlaneHelper = new PlaneHelper(this.middlePlane,2,0xffff00)
     // this.renderLayer.scene.add(this.middlePlaneHelper)
   }
@@ -277,10 +280,32 @@ export class Cylinder extends CommonGeo {
     // 获取所有顶点
     const vertices = edges.attributes.position.array;
     const circle_1 = vertices.slice(0, vertices.length / 2);
+
+    // 两条侧边   -- 对于侧边 需要应用相机的变化
+    const material2 = new LineBasicMaterial({ color: LINE_INIT_COLOR });
+
+    const points1 = [
+      new Vector3(this.radius, -this.height / 2, 0),
+      new Vector3(this.radius, this.height / 2, 0),
+    ];
+    const points2 = [
+      new Vector3(-this.radius, -this.height / 2, 0),
+      new Vector3(-this.radius, this.height / 2, 0),
+    ];
+
+    const geo3 = new BufferGeometry().setFromPoints(points1);
+    const side1 = new Line(geo3, material2);
+    const geo4 = new BufferGeometry().setFromPoints(points2);
+    const side2 = new Line(geo4, material2);
+    // 保存侧边的组
+    const sideMesh = new Mesh();
+    sideMesh.add(side1);
+    sideMesh.add(side2);
     // 保存上下两个圆形的组
     const circles = this.searchDash(circle_1);
     // 保存整个线框的组
     const lineMesh = new Mesh();
+    lineMesh.add(sideMesh);
     lineMesh.add(circles);
     return lineMesh;
   }
@@ -323,13 +348,13 @@ export class Cylinder extends CommonGeo {
     if (!(childMesh.material instanceof Array)) {
       childMesh.material.dispose();
     }
-    // childMesh.material = new LineDashedMaterial({
-    //   color: LINE_DASH_INIT_COLOR,
-    //   linewidth: 1,
-    //   scale: 1,
-    //   dashSize: DASH_SIZE,
-    //   gapSize: GAP_SIZE,
-    // });
+    childMesh.material = new LineDashedMaterial({
+      color: LINE_DASH_INIT_COLOR,
+      linewidth: 1,
+      scale: 1,
+      dashSize: DASH_SIZE,
+      gapSize: GAP_SIZE,
+    });
 
     const circlesMesh = new Mesh();
     circlesMesh.add(circle, cirlce2);
@@ -344,64 +369,103 @@ export class Cylinder extends CommonGeo {
       this.originGroup!.translateY(position.y);
       this.originGroup!.applyQuaternion(quaternion as Quaternion);
     } else {
-      const deltaX = this.downPoint.x
-      const deltaZ = this.downPoint.z 
+      const deltaX = this.downPoint.x;
+      const deltaZ = this.downPoint.z;
       // this.originGroup!.translateX(deltaX);
       // this.originGroup!.translateZ(deltaZ);
       // this.originGroup!.translateY(this.dirHeight / 2);
-      const posMatrix = new Matrix4().makeTranslation(deltaX,this.dirHeight / 2,deltaZ)
-      this.originGroup?.applyMatrix4(posMatrix)
-      this.posMatrix?.copy(posMatrix)
+      const posMatrix = new Matrix4().makeTranslation(
+        deltaX,
+        this.dirHeight / 2,
+        deltaZ
+      );
+      this.originGroup?.applyMatrix4(posMatrix);
+      this.posMatrix?.copy(posMatrix);
     }
   }
 
   // 旋转时，同步更新几何体的边界线 以及 虚线
   // TODO: 优化渲染，不要将侧边线框，单独添加到scene,几何体作为一个统一的整体，需要包含线框
-  updateDash(quaternion: Quaternion,plane:Plane,axis_y_rotate?:Quaternion) {
-    if(!axis_y_rotate){
-      axis_y_rotate = new Quaternion()
+  updateDash(quaternion: Quaternion, plane: Plane, axis_y_rotate?: Quaternion) {
+    if (!axis_y_rotate) {
+      axis_y_rotate = new Quaternion();
     }
     // 先将旋转量同步到平面上
     const rotateMatrix = new Matrix4().makeRotationFromQuaternion(quaternion);
     this.middlePlane!.applyMatrix4(rotateMatrix);
-    const originCenter = this.calcIntersectionDir(plane)
-    const centerPos = originCenter.clone().applyMatrix4(this.posMatrix)
-    const centerPos2 = originCenter.clone().multiplyScalar(-1).applyMatrix4(this.posMatrix)
+    // 计算出两个平面的交点坐标
+    const originCenter = this.calcIntersectionDir(plane);
+    this.updataDash3(originCenter);
+    // this.updataDash2(axis_y_rotate, originCenter.clone());
+    const centerPos = originCenter.clone().applyMatrix4(this.posMatrix);
+    const centerPos2 = originCenter
+      .clone()
+      .multiplyScalar(-1)
+      .applyMatrix4(this.posMatrix);
     // 通过线段中点，计算线段的端点
-    const newY = new Vector3(0,1,0).applyQuaternion(axis_y_rotate).normalize()
-    const halfH = this.height / 2
-    const p1 = centerPos.clone().add(newY.clone().multiplyScalar(halfH))
-    const p2 = centerPos.clone().sub(newY.clone().multiplyScalar(halfH))
-    const p3 = centerPos2.clone().add(newY.clone().multiplyScalar(halfH))
-    const p4 = centerPos2.clone().sub(newY.clone().multiplyScalar(halfH))
+    const newY = new Vector3(0, 1, 0)
+      .applyQuaternion(axis_y_rotate)
+      .normalize();
+    const halfH = this.height / 2;
+    const p1 = centerPos.clone().add(newY.clone().multiplyScalar(halfH));
+    const p2 = centerPos.clone().sub(newY.clone().multiplyScalar(halfH));
+    const p3 = centerPos2.clone().add(newY.clone().multiplyScalar(halfH));
+    const p4 = centerPos2.clone().sub(newY.clone().multiplyScalar(halfH));
 
-    if(!this.threeSideLine){
-     const oneLine =  createBufferLine([p1,p2])
-     const twoLine =  createBufferLine([p3,p4])
-     this.threeSideLine = new Mesh()
-     this.threeSideLine.add(oneLine,twoLine)
-     this.renderLayer.scene.add(this.threeSideLine)
-    }else{
-      const line1 = this.threeSideLine.children[0] as Line
-      const line2 = this.threeSideLine.children[1] as Line
-      line1.geometry.setFromPoints([p1,p2])
-      line2.geometry.setFromPoints([p3,p4])
+    if (!this.threeSideLine) {
+      const oneLine = createBufferLine([p1, p2]);
+      const twoLine = createBufferLine([p3, p4]);
+      this.threeSideLine = new Mesh();
+      this.threeSideLine.add(oneLine, twoLine);
+      // this.renderLayer.scene.add(this.threeSideLine);
+    } else {
+      const line1 = this.threeSideLine.children[0] as Line;
+      const line2 = this.threeSideLine.children[1] as Line;
+      line1.geometry.setFromPoints([p1, p2]);
+      line2.geometry.setFromPoints([p3, p4]);
     }
+  }
+
+  // 计算出交点坐标后，将坐标位转换到 XOZ平面上
+  updataDash3(point: Vector3) {
+    const matrixInvert = new Quaternion()
+      .setFromRotationMatrix(this.originGroup?.matrixWorld as Matrix4)
+      .invert();
+    const XOZpoint = point.clone().applyQuaternion(matrixInvert);
+    const { x, z } = XOZpoint;
+    const rotateY = Math.atan2(x, z);
+    console.log(MathUtils.radToDeg(rotateY));
+
+    const rad = rotateY + Math.PI / 2;
+    const matrixRotateInvert = this.oldRotateMatrix.invert();
+    this.oldRotateMatrix = new Matrix4().makeRotationY(rad);
+    this.lineMesh.applyMatrix4(matrixRotateInvert);
+    this.lineMesh.applyMatrix4(this.oldRotateMatrix);
+  }
+  updataDash2(rotate_axis: Quaternion, pos: Vector3) {
+    // 获取到旋转后的几何体 X 轴方向向量
+    const X_axis = new Vector3(-1, 0, 0).applyQuaternion(rotate_axis);
+    const zValue = X_axis.clone().normalize().z;
+    if (!this.flagZ) {
+      this.flagZ = zValue;
+    }
+    let rad = X_axis.clone().angleTo(pos);
+    this.flagZ = zValue;
+    const matrixInvert = this.oldRotateMatrix.invert();
+    this.oldRotateMatrix = new Matrix4().makeRotationY(rad);
+    this.lineMesh.applyMatrix4(matrixInvert);
+    this.lineMesh.applyMatrix4(this.oldRotateMatrix);
   }
 
   // 计算当前视线的垂面 与 平行于模型坐标系XOZ平面的交点 以及方向
   // 这里的交点一定是世界坐标的圆心，两个面都经过原点，所以只需要知道方向即可
-  calcIntersectionDir(plane:Plane) {
+  calcIntersectionDir(plane: Plane) {
     // 计算交线方向
     const direction = new Vector3();
     // 计算交线的方向向量
-    direction.crossVectors(
-      plane.normal,
-     this.middlePlane!.normal
-    );
-    return direction.normalize().multiplyScalar(this.radius)
+    direction.crossVectors(plane.normal, this.middlePlane!.normal);
+    return direction.normalize().multiplyScalar(this.radius);
   }
-
 
   /**
    * 获取圆锥 计算最小包围盒所需的所有顶点数据
@@ -416,6 +480,20 @@ export class Cylinder extends CommonGeo {
       64
     );
     const circlePoints = geometry.attributes.position.array;
+    return [circlePoints];
+  }
+
+  // 圆柱体的最小包围盒 通过遍历几何体所有的顶点计算得出
+  getMinSize() {
+    const geometry = new CylinderGeometry(
+      this.radius * this.totalScaleX,
+      this.radius * this.totalScaleX,
+      this.height * this.totalScaleY,
+      64
+    );
+    geometry.applyMatrix4(this.originGroup!.matrixWorld);
+    const circlePoints = geometry.attributes.position
+      .array as unknown as number[];
     return [circlePoints];
   }
 

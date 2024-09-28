@@ -129,7 +129,7 @@ export class GeoBase {
     this.buildGeo();
   }
 
-  // 
+  // 构建一个垂直于视线的平面
   createPlane() {
     const normalVec = this.renderLayer.camera.position.clone();
     this.eyeDirVerPlane = new Plane(normalVec, normalVec.length());
@@ -155,8 +155,8 @@ export class GeoBase {
 
   // 旋转几何体 并更新相应的虚线
   rotateGeo(quaternion: Quaternion) {
-    const axis_y_rotate = new Quaternion().setFromRotationMatrix(this.originGroup.matrix)
     this.originGroup!.applyQuaternion(quaternion);
+    const axis_y_rotate = new Quaternion().setFromRotationMatrix(this.originGroup.matrix)
     this.geoObj.updateDash(quaternion,this.eyeDirVerPlane,axis_y_rotate)
   }
 

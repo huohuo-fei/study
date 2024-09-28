@@ -177,23 +177,31 @@ class ResizeControl extends Receiver {
 
   /** 根据传入的几何体尺寸 生成并挂载 resize 控制器 */
   registerControl(obj: CommonGeo) {
-    const { width, height, depth, totalScaleX, totalScaleY, totalScaleZ } = obj;
+    console.log(obj,'obj');
+    
+    const { width, height, depth, totalScaleX, totalScaleY, totalScaleZ,radius } = obj;
     this.w = width;
     this.h = height;
     this.d = depth;
+
+    if(radius){
+      this.w = radius*2;
+      this.d = 0
+    }
     console.log(width, height, depth,'width, height, depth,');
     
     this.initResize();
     this.lineMesh && this.resizeGroup.add(this.lineMesh);
     this.resizeGroup.renderOrder = TOP_RENDER_ORDER + 1;
+    // debugger
     obj.originGroup?.add(this.resizeGroup);
 
     // 获取物体最新的缩放比 更新
     this.totalScaleX = totalScaleX;
     this.totalScaleY = totalScaleY;
     this.totalScaleZ = totalScaleZ;
-    this.updateSize(resizeDir.right, 0);
-    this.updateSize(resizeDir.front, 0);
+    // this.updateSize(resizeDir.right, 0);
+    // this.updateSize(resizeDir.front, 0);
   }
 
   /** 销毁指定对象的 控制器 */

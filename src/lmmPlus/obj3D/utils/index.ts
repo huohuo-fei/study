@@ -278,7 +278,7 @@ export const createCacheCanvas = (
 
 export function createBufferLine(points:Vector3[]){
   const material = new LineBasicMaterial({
-    color: '#ffffff',
+    color: '#ff0000',
   });
     const geo = new BufferGeometry().setFromPoints(points)
     const line = new LineSegments(geo,material)

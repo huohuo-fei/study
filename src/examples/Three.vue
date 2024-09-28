@@ -111,7 +111,7 @@ const changeGeoType = (event:Event) =>{
     <select :value="geoType" @change="changeGeoType">
       <option :value="GeoType.cube">立方体</option>
       <option :value="GeoType.cylinder">圆柱体</option>
-      <option :value="GeoType.cone">圆锥体</option>
+      <!-- <option :value="GeoType.cone">圆锥体</option> -->
     </select>
       <button class="btn" @click="switchMode(eventType.draw3D)">draw</button>
       <button class="btn" @click="switchMode(eventType.resize3D)" :disabled="disAbleControl">

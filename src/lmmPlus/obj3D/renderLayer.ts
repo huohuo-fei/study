@@ -123,6 +123,9 @@ export class RenderLayer extends Receiver {
     this.uiCtx?.clearRect(0, 0, this.width, this.height);
     this.threeLayer.render();
     this.uiCtx?.drawImage(this.topCanvas, 0, 0);
+    requestAnimationFrame(() => {
+      this.renderDraw();
+    })
   }
 
   renderBg() {
@@ -142,9 +145,11 @@ export class RenderLayer extends Receiver {
   }
 
   loopRender() {
-    setInterval(() => {
+    // setInterval(() => {
       this.renderDraw();
-    }, 30);
+    // }, 30);
+
+
   }
 
   changeMode(eventType: eventType) {

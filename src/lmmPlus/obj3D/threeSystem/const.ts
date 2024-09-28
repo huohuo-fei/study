@@ -4,8 +4,8 @@
 export const TOP_RENDER_ORDER = 100
 
 // 虚线的长度以及间隙
-export const DASH_SIZE = 0.02
-export const GAP_SIZE = 0.02
+export const DASH_SIZE = 0.04
+export const GAP_SIZE = 0.04
 
 // 线框以及虚线的初始颜色
 export const LINE_INIT_COLOR = 0xffffff
