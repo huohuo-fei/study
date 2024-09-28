@@ -236,20 +236,7 @@ export class Cylinder extends CommonGeo {
       this.height,
       64
     );
-
-    // 需要给每个面设置不同的material -- 为了后期单独给面
-    const materilaArrSource = [];
-    for (let i = 0; i < 3; i++) {
-      const m = new MeshStandardMaterial({
-        color: 0xffff00,
-        side: DoubleSide,
-        depthFunc: NeverDepth, // 默认是不渲染的  只有在 填充颜色后 才会渲染
-        polygonOffset: true,
-        polygonOffsetFactor: 1,
-        polygonOffsetUnits: 4,
-      });
-      materilaArrSource.push(m);
-    }
+    const materilaArrSource = this.buildMaterial(metaData);
     this.realGeo = new Mesh(geometry, materilaArrSource);
     this.realGeo.name = 'cylinder';
 
@@ -261,9 +248,47 @@ export class Cylinder extends CommonGeo {
     this.originGroup.add(this.realGeo);
     this.originGroup.add(this.lineMesh);
     this.originGroup.name = 'cylinderBox';
-    this.transformGeo();
+    this.transformGeo(position, quaternion);
     this.createMiddlePlane();
     return this.originGroup;
+  }
+
+  buildMaterial(metaData?:any){
+    const materilaArrSource = [];
+    if(metaData){
+      for (let i = 0; i < metaData.materials.length; i++) {
+        if (metaData.materials[i].type !== 'MeshStandardMaterial') continue;
+        const color = new Color(metaData.materials[i].color).getHexString();
+        // 在遍历材质时，需要将已近有颜色的面 记录下来
+        const depthFunc = metaData.materials[i].depthFunc;
+        if (depthFunc !== NeverDepth) {
+          this.alreadyChangeIndexs.set(i, '#' + color);
+        }
+        const m = new MeshStandardMaterial({
+          color: '#' + color,
+          side: DoubleSide,
+          depthFunc: depthFunc === NeverDepth ? NeverDepth : LessEqualDepth,
+          polygonOffset: true,
+          polygonOffsetFactor: 1,
+          polygonOffsetUnits: 4,
+        });
+        materilaArrSource.push(m);
+      }
+    }else{
+      for (let i = 0; i < 3; i++) {
+        const m = new MeshStandardMaterial({
+          color: 0xffff00,
+          side: DoubleSide,
+          depthFunc: NeverDepth, // 默认是不渲染的  只有在 填充颜色后 才会渲染
+          polygonOffset: true,
+          polygonOffsetFactor: 1,
+          polygonOffsetUnits: 4,
+        });
+        materilaArrSource.push(m);
+      }
+    }
+
+    return materilaArrSource
   }
 
   /**
@@ -371,9 +396,6 @@ export class Cylinder extends CommonGeo {
     } else {
       const deltaX = this.downPoint.x;
       const deltaZ = this.downPoint.z;
-      // this.originGroup!.translateX(deltaX);
-      // this.originGroup!.translateZ(deltaZ);
-      // this.originGroup!.translateY(this.dirHeight / 2);
       const posMatrix = new Matrix4().makeTranslation(
         deltaX,
         this.dirHeight / 2,
@@ -385,78 +407,88 @@ export class Cylinder extends CommonGeo {
   }
 
   // 旋转时，同步更新几何体的边界线 以及 虚线
-  // TODO: 优化渲染，不要将侧边线框，单独添加到scene,几何体作为一个统一的整体，需要包含线框
-  updateDash(quaternion: Quaternion, plane: Plane, axis_y_rotate?: Quaternion) {
-    if (!axis_y_rotate) {
-      axis_y_rotate = new Quaternion();
-    }
+  updateDash(quaternion: Quaternion, plane: Plane) {
+    /** 先计算在世界坐标系下，两个平面的交点坐标 **/
     // 先将旋转量同步到平面上
     const rotateMatrix = new Matrix4().makeRotationFromQuaternion(quaternion);
     this.middlePlane!.applyMatrix4(rotateMatrix);
     // 计算出两个平面的交点坐标
     const originCenter = this.calcIntersectionDir(plane);
-    this.updataDash3(originCenter);
-    // this.updataDash2(axis_y_rotate, originCenter.clone());
-    const centerPos = originCenter.clone().applyMatrix4(this.posMatrix);
-    const centerPos2 = originCenter
-      .clone()
-      .multiplyScalar(-1)
-      .applyMatrix4(this.posMatrix);
-    // 通过线段中点，计算线段的端点
-    const newY = new Vector3(0, 1, 0)
-      .applyQuaternion(axis_y_rotate)
-      .normalize();
-    const halfH = this.height / 2;
-    const p1 = centerPos.clone().add(newY.clone().multiplyScalar(halfH));
-    const p2 = centerPos.clone().sub(newY.clone().multiplyScalar(halfH));
-    const p3 = centerPos2.clone().add(newY.clone().multiplyScalar(halfH));
-    const p4 = centerPos2.clone().sub(newY.clone().multiplyScalar(halfH));
-
-    if (!this.threeSideLine) {
-      const oneLine = createBufferLine([p1, p2]);
-      const twoLine = createBufferLine([p3, p4]);
-      this.threeSideLine = new Mesh();
-      this.threeSideLine.add(oneLine, twoLine);
-      // this.renderLayer.scene.add(this.threeSideLine);
-    } else {
-      const line1 = this.threeSideLine.children[0] as Line;
-      const line2 = this.threeSideLine.children[1] as Line;
-      line1.geometry.setFromPoints([p1, p2]);
-      line2.geometry.setFromPoints([p3, p4]);
-    }
+    // 物体本身的旋转矩阵
+    const modelQuaternion = new Quaternion().setFromRotationMatrix(
+      this.originGroup?.matrixWorld as Matrix4
+    );
+    this.updateSidePos(originCenter, modelQuaternion);
+    this.updateDashPos(modelQuaternion);
   }
 
-  // 计算出交点坐标后，将坐标位转换到 XOZ平面上
-  updataDash3(point: Vector3) {
-    const matrixInvert = new Quaternion()
-      .setFromRotationMatrix(this.originGroup?.matrixWorld as Matrix4)
-      .invert();
-    const XOZpoint = point.clone().applyQuaternion(matrixInvert);
+  /**
+   * 通过交点 和 物体的旋转量，计算要让圆柱体侧边保持相对不变的旋转量
+   * 主要思路是：将物体坐标再次变换到 Y轴 和世界坐标同向的位置
+   * 然后，再计算当前交点的位置 绕Y轴的旋转量，
+   * 应用这个旋转量的逆，就可以让物体再Y轴方向上保持相对不动
+   * @param originCenter     交点坐标 世界坐标位
+   * @param modelQuaternion  物体本身的旋转量
+   */
+  updateSidePos(originCenter: Vector3, modelQuaternion: Quaternion) {
+    const matrixInvert = modelQuaternion.clone().invert();
+    const XOZpoint = originCenter.clone().applyQuaternion(matrixInvert);
     const { x, z } = XOZpoint;
-    const rotateY = Math.atan2(x, z);
-    console.log(MathUtils.radToDeg(rotateY));
-
-    const rad = rotateY + Math.PI / 2;
+    // Math.atan2() 返回从原点 (0,0) 到 (x,y) 点的线段与 x 轴正方向之间的平面角度 (弧度值)，也就是 Math.atan2(y,x)
+    // 这里 Math.atan2(z, -x) 使用-ｘ是由于默认的交点方向是X的负方向
+    const rad = Math.atan2(z, -x);
+    // 这个计算的视线方向，是相对于模型坐标系而言的，所以需要旋转回去
     const matrixRotateInvert = this.oldRotateMatrix.invert();
     this.oldRotateMatrix = new Matrix4().makeRotationY(rad);
     this.lineMesh.applyMatrix4(matrixRotateInvert);
     this.lineMesh.applyMatrix4(this.oldRotateMatrix);
   }
-  updataDash2(rotate_axis: Quaternion, pos: Vector3) {
-    // 获取到旋转后的几何体 X 轴方向向量
-    const X_axis = new Vector3(-1, 0, 0).applyQuaternion(rotate_axis);
-    const zValue = X_axis.clone().normalize().z;
-    if (!this.flagZ) {
-      this.flagZ = zValue;
-    }
-    let rad = X_axis.clone().angleTo(pos);
-    this.flagZ = zValue;
-    const matrixInvert = this.oldRotateMatrix.invert();
-    this.oldRotateMatrix = new Matrix4().makeRotationY(rad);
-    this.lineMesh.applyMatrix4(matrixInvert);
-    this.lineMesh.applyMatrix4(this.oldRotateMatrix);
-  }
 
+  /**
+   * 计算本地坐标系的Y轴 与视线方向的夹角值，得出当前物体相对视点的位置
+   * 如果方向基本相同，那么正对视点，虚线就在下方 反之 虚线就在物体的上方
+   * @param modelQuaternion
+   */
+  updateDashPos(modelQuaternion: Quaternion) {
+    // 计算本地坐标系的Y轴 和视线的夹角
+    const eyeDir = this.camera.position.clone();
+    const dir = new Vector3(0, 1, 0).applyQuaternion(modelQuaternion);
+    const dotValue = eyeDir.dot(dir);
+    const toplineMesh = this.lineMesh.getObjectByName(CIRCLE_TOP_LINE);
+    const bottomlineMesh = this.lineMesh.getObjectByName(CIRCLE_BOTTOM_LINE);
+    // 根据相机的位置  动态切换显示的虚线
+    let cancelDashObj;
+    let setDashObj;
+    const flagPos = Math.sign(dotValue);
+    if (flagPos > 0) {
+      // 俯视 取消虚线的是 bottom
+      cancelDashObj = toplineMesh;
+      setDashObj = bottomlineMesh;
+    } else {
+      cancelDashObj = bottomlineMesh;
+      setDashObj = toplineMesh;
+    }
+    const childMeshCancel = cancelDashObj?.children[0] as Line;
+    const childMeshDash = setDashObj?.children[0] as Line;
+
+    // 检测 需要取消虚线的边框  是否为虚线  如果不是 那么不用做任何操作
+    if (childMeshCancel.material instanceof LineDashedMaterial) {
+      // 需要将虚线显示在bottom
+      childMeshCancel.material.dispose();
+      childMeshCancel.material = new LineBasicMaterial({
+        color: LINE_INIT_COLOR,
+      });
+
+      (childMeshDash.material as MeshBasicMaterial).dispose();
+      childMeshDash.material = new LineDashedMaterial({
+        color: LINE_DASH_INIT_COLOR,
+        linewidth: 1,
+        scale: 1,
+        dashSize: DASH_SIZE / this.totalScaleX,
+        gapSize: GAP_SIZE / this.totalScaleX,
+      });
+    }
+  }
   // 计算当前视线的垂面 与 平行于模型坐标系XOZ平面的交点 以及方向
   // 这里的交点一定是世界坐标的圆心，两个面都经过原点，所以只需要知道方向即可
   calcIntersectionDir(plane: Plane) {
@@ -464,7 +496,7 @@ export class Cylinder extends CommonGeo {
     const direction = new Vector3();
     // 计算交线的方向向量
     direction.crossVectors(plane.normal, this.middlePlane!.normal);
-    return direction.normalize().multiplyScalar(this.radius);
+    return direction.normalize();
   }
 
   /**
@@ -486,9 +518,9 @@ export class Cylinder extends CommonGeo {
   // 圆柱体的最小包围盒 通过遍历几何体所有的顶点计算得出
   getMinSize() {
     const geometry = new CylinderGeometry(
-      this.radius * this.totalScaleX,
-      this.radius * this.totalScaleX,
-      this.height * this.totalScaleY,
+      this.radius,
+      this.radius,
+      this.height,
       64
     );
     geometry.applyMatrix4(this.originGroup!.matrixWorld);
@@ -516,7 +548,7 @@ export class Cylinder extends CommonGeo {
         totalScaleY,
         newValue
       );
-      this.setDashStyle(totalScaleZ + distance / this.radius / 2);
+      this.setDashStyle(newValue);
     }
     return UPDATE_RESIZE_CONTROL;
   }
@@ -541,7 +573,6 @@ export class Cylinder extends CommonGeo {
     } else {
       updateStyleObj = toplineMesh;
     }
-
     // 更新
     const updateLine = updateStyleObj!.children[0] as Line;
     (updateLine.material as LineDashedMaterial).dashSize =
@@ -549,53 +580,34 @@ export class Cylinder extends CommonGeo {
     (updateLine.material as LineDashedMaterial).gapSize = GAP_SIZE / scaleValue;
   }
 
-  // 解析之前的保存的几何体JSON数据  -- 在原点重新绘制一个元素
-  parseObj(obj: any, metaData: any) {
-    const { radiusTop, height } = obj.children[0].geometry.parameters;
+  saveOutSize(): void {
+    const scale = this.originGroup!.scale;
+    this.totalScaleX = scale.x;
+    this.totalScaleY = scale.y;
+    this.totalScaleZ = scale.z;
+  }
+  scaleTotalByValue(value: number): void {
+    const { totalScaleX, totalScaleY, totalScaleZ } = this;
+    const newScaleX = totalScaleX * (1 + value);
+    const newScaleY = totalScaleY * (1 + value);
+    const newScaleZ = totalScaleZ * (1 + value);
+    this.originGroup!.scale.set(newScaleX, newScaleY, newScaleZ);
+    this.setDashStyle(newScaleX);
+  }
+  scaleTotalByValueEnd(): void {
+    const scale = this.originGroup!.scale;
+    this.totalScaleX = scale.x;
+    this.totalScaleY = scale.y;
+    this.totalScaleZ = scale.z;
+  }
+  parseData(obj: any, metaData: any): Group<Object3DEventMap> {
+    const { radiusTop , height } = obj.children[0].geometry.parameters;
     this.radius = radiusTop;
     this.height = height;
-    const geometry = new CylinderGeometry(
-      this.radius,
-      this.radius,
-      this.height,
-      64
+    return this.buildGeoBySize(
+      obj.position as Vector3,
+      obj.quaternion,
+      metaData
     );
-
-    // 需要给每个面设置不同的material -- 为了后期单独给面
-    const materilaArrSource = [];
-    for (let i = 0; i < metaData.data.materials.length; i++) {
-      if (metaData.data.materials[i].type !== 'MeshStandardMaterial') continue;
-      const color = new Color(metaData.data.materials[i].color).getHexString();
-      // 在遍历材质时，需要将已近有颜色的面 记录下来
-      const depthFunc = metaData.data.materials[i].depthFunc;
-      if (depthFunc !== NeverDepth) {
-        this.alreadyChangeIndexs.set(i, '#' + color);
-      }
-      const m = new MeshStandardMaterial({
-        color: '#' + color,
-        side: DoubleSide,
-        depthFunc: depthFunc === NeverDepth ? NeverDepth : LessEqualDepth,
-        polygonOffset: true,
-        polygonOffsetFactor: 1,
-        polygonOffsetUnits: 4,
-      });
-      materilaArrSource.push(m);
-    }
-    this.realGeo = new Mesh(geometry, materilaArrSource);
-    this.realGeo.name = 'cylinder';
-
-    // 创建线框
-    const edges = new EdgesGeometry(geometry, 10);
-    this.lineMesh = this.converLine(edges);
-    // 组合
-    this.originGroup = new Group();
-    this.originGroup.add(this.realGeo);
-    this.originGroup.add(this.lineMesh);
-    this.originGroup.name = 'cylinderBox';
-    this.originGroup.scale.set(obj.scale.x, obj.scale.y, obj.scale.z);
-    this.totalScaleX = obj.scale.x;
-    this.totalScaleY = obj.scale.y;
-    this.totalScaleZ = obj.scale.z;
-    return this.originGroup;
   }
 }

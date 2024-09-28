@@ -1,7 +1,7 @@
 import { eventType } from '../../driver';
 import { ThreeLayer } from '../ThreeLayer';
 import { Cube } from '../compontent/cube';
-import { Cone } from '../compontent/cone';
+// import { Cone } from '../compontent/cone';
 import { Cylinder } from '../compontent/cylinder';
 import {
   getPointOfFloor,
@@ -64,8 +64,8 @@ export class GeoBase {
         this.geoObj = new Cube(this.renderLayer);
         break;
       case GeoType.cone:
-        this.geoObj = new Cone(this.renderLayer);
-        break;
+        // this.geoObj = new Cone(this.renderLayer);
+        // break;
       case GeoType.cylinder:
         this.geoObj = new Cylinder(this.renderLayer);
         break;
@@ -157,7 +157,7 @@ export class GeoBase {
   rotateGeo(quaternion: Quaternion) {
     this.originGroup!.applyQuaternion(quaternion);
     const axis_y_rotate = new Quaternion().setFromRotationMatrix(this.originGroup.matrix)
-    this.geoObj.updateDash(quaternion,this.eyeDirVerPlane,axis_y_rotate)
+    this.geoObj.updateDash(quaternion,this.eyeDirVerPlane)
   }
 
   resizeGeo(dir: string, distance: number) {
@@ -254,7 +254,7 @@ export class GeoBase {
       this.renderLayer.scene.add(this.originGroup);
       this.renderLayer.baseLayer.cacheSnapshot.removeSnapshot(snapshotData);
       this.showFrame();
-      this.geoObj.updateDash();
+      this.rotateGeo(new Quaternion())
       this.renderLayer.baseLayer.onSendActiveObj();
     });
   }

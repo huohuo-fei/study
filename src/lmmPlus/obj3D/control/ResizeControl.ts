@@ -61,9 +61,9 @@ class ResizeControl extends Receiver {
   dir: Vector2 = new Vector2();
   len: number = 0;
   downPointFloor: Vector3 = new Vector3();
-  right_dir: Vector3= new Vector3();
-  eyeDir: Vector3= new Vector3();
-  front_dir: Vector3= new Vector3();
+  right_dir: Vector3 = new Vector3();
+  eyeDir: Vector3 = new Vector3();
+  front_dir: Vector3 = new Vector3();
   up_dir: Vector3 = new Vector3();
   constructor(layer: ThreeLayer) {
     super();
@@ -177,19 +177,27 @@ class ResizeControl extends Receiver {
 
   /** 根据传入的几何体尺寸 生成并挂载 resize 控制器 */
   registerControl(obj: CommonGeo) {
-    console.log(obj,'obj');
-    
-    const { width, height, depth, totalScaleX, totalScaleY, totalScaleZ,radius } = obj;
+    console.log(obj, 'obj');
+
+    const {
+      width,
+      height,
+      depth,
+      totalScaleX,
+      totalScaleY,
+      totalScaleZ,
+      radius,
+    } = obj;
     this.w = width;
     this.h = height;
     this.d = depth;
 
-    if(radius){
-      this.w = radius*2;
-      this.d = 0
+    if (radius) {
+      this.w = radius * 2;
+      this.d = 0;
     }
-    console.log(width, height, depth,'width, height, depth,');
-    
+    console.log(width, height, depth, 'width, height, depth,');
+
     this.initResize();
     this.lineMesh && this.resizeGroup.add(this.lineMesh);
     this.resizeGroup.renderOrder = TOP_RENDER_ORDER + 1;
@@ -309,7 +317,6 @@ class ResizeControl extends Receiver {
     this.unifyScale();
   }
 
-
   // 计算三轴在 XOZ 平面上的投影向量
   calcFrontProject() {
     // 物体本地坐标系的 Z轴，
@@ -344,7 +351,7 @@ class ResizeControl extends Receiver {
    * @param originPos 射线器的起点 就是X  Y  Z 轴的世界坐标
    * @returns
    */
-  createRay(originPos: Vector3):Vector3 {
+  createRay(originPos: Vector3): Vector3 {
     // X Y Z 轴的射线器
     const ray = new Ray(originPos, this.eyeDir);
 
@@ -386,6 +393,11 @@ class ResizeControl extends Receiver {
   updateSize(dir: string, distance: number) {
     this.scaleCircle(dir, distance);
     this.scaleCylinder(dir, distance);
+
+    if (this.d === 0 && dir === 'right') {
+      // this.scaleCircle('front', distance);
+      // this.scaleCylinder('front', distance);
+    }
   }
 
   // 缩放圆点  -- 不论选择哪个方向缩放，都需要重置控制点的大小
@@ -407,13 +419,16 @@ class ResizeControl extends Receiver {
         );
         break;
       case resizeDir.right:
+        // 对于X 轴的缩放，需要考虑 像圆柱 、 圆锥这种单缩放X ，实际缩放X和Z
         const scaleX = totalScaleX + distance / this.w;
-        this.circle_up.scale.set(1 / scaleX, 1 / totalScaleY, 1 / totalScaleZ);
-        this.circle_right.scale.set(
-          1 / scaleX,
-          1 / totalScaleY,
-          1 / totalScaleZ
-        );
+        let scaleXZ = totalScaleZ;
+        if (this.d === 0) {
+          // 只有两根 resize 轴，所以这里需要缩放Z
+          scaleXZ = scaleX;
+        }
+
+        this.circle_up.scale.set(1 / scaleX, 1 / totalScaleY, 1 / scaleXZ);
+        this.circle_right.scale.set(1 / scaleX, 1 / totalScaleY, 1 / scaleXZ);
         this.circle_front.scale.set(
           1 / scaleX,
           1 / totalScaleY,
@@ -454,8 +469,12 @@ class ResizeControl extends Receiver {
         break;
       case resizeDir.right:
         const scaleX = totalScaleX + distance / this.w;
-        this.cylinderUp.scale.set(1 / scaleX, 1, 1 / totalScaleZ);
-        this.cylinderFront.scale.set(1 / scaleX, 1, 1 / totalScaleY);
+        let sclaeXZ = totalScaleZ
+        if(this.d === 0){
+          sclaeXZ = scaleX
+        }
+        this.cylinderUp.scale.set(1 / scaleX, 1, 1 / sclaeXZ);
+        this.cylinderFront.scale.set(1 / scaleX, 1, 1 / sclaeXZ);
         break;
       case resizeDir.front:
         const scaleZ = totalScaleZ + distance / this.d;

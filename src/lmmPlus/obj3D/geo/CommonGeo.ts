@@ -12,7 +12,7 @@ import {
 } from 'three';
 import { ThreeLayer } from '../ThreeLayer';
 // 几何体的基类  -- 这里提供了每个几何体需要有的方法
-class CommonGeo {
+abstract class  CommonGeo {
   // 当前选中面的索引
   selectColorIndex: number;
   // 材质索引和颜色值的 map
@@ -116,31 +116,65 @@ class CommonGeo {
     }
   }
 
-  // 接口 ---------------- 每个几何体都需要实现的方法
-  createGeo() {
-    return new Group();
-  }
-  createDefaultGeo(startPoint:Vector3,endPoint: Vector3){
-    return new Group();
-  }
-  updateDash(quaternion?:Quaternion,plane?:Plane,axis_y_rotate?:Quaternion) {}
-  // 绘制线框  -- 主要是绘制底部线框 拉伸的高度为零
-  drawBottom(startPoint: Vector3, endPoint: Vector3): Group | null {
-    return new Group();
-  }
-  // 拉伸底部线框 -- 主要是根据高度更新线框
-  stretchBottomThree(height?: number) {}
-  updateOriginGeo(resizeDir: string, distance: number){}
-  saveOutSize(){}
-  getMinSize():number[][]{
-    return []
-  }
-  scaleTotalByValue(value:number){}
-  scaleTotalByValueEnd(){}
-  // 解析数据，生成一个几何体
-  parseData(obj: Object3D, metaData: any){
-    return new Group()
-  }
+  // ---------------- 每个几何体都需要实现的方法 ---------------- //
+  abstract createGeo():Group
+  abstract createDefaultGeo(startPoint:Vector3,endPoint: Vector3):Group
+
+  /**
+   * 几何体发生旋转后，需要更改几何相关虚线
+   * 针对圆柱体和圆锥体，还需要更改侧边的位置
+   * @param quaternion 当前旋转量
+   * @param plane      平行于本地坐标系 XOZ的平面
+   */
+  abstract updateDash(quaternion?:Quaternion,plane?:Plane):void
+
+  /**
+   * 绘制线框,主要是绘制底部线框 拉伸的高度为零
+   * @param startPoint
+   * @param endPoint 
+   */
+  abstract drawBottom(startPoint: Vector3, endPoint: Vector3): Group | null 
+  
+  /**
+   * 拉伸底部线框  生成 线框几何体
+   * @param height 拉伸的高度
+   */
+  abstract stretchBottomThree(height?: number) :void
+
+  /**
+   * resize 控制器触发后，需要同步更新几何体大小
+   * @param resizeDir 当前拉伸方向 up right front
+   * @param distance  拉伸距离
+   */
+  abstract updateOriginGeo(resizeDir: string, distance: number):void
+
+  /**
+   * resize 结束后，需要同步最新的 各轴缩放系数
+   */
+  abstract saveOutSize():void
+
+  /**
+   * 获取几何体最小尺寸 世界坐标系下的三维坐标
+   */
+  abstract getMinSize():number[][]
+
+  /**
+   * 通过控制点 对整个几何体进行等比缩放
+   * @param value 缩放值
+   */
+  abstract scaleTotalByValue(value:number):void
+
+  /**
+   * 缩放结束，保存最新的缩放值
+   */
+  abstract scaleTotalByValueEnd():void
+  
+  /**
+   * 根据数据 将图片恢复为几何体
+   * @param obj 几何体
+   * @param metaData  保存着几何体相关的元数据
+   */
+  abstract parseData(obj: Object3D, metaData: any):Group
 }
 
 export { CommonGeo };
