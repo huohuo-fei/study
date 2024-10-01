@@ -28,6 +28,7 @@ import {
   PlaneHelper,
   Object3D,
   Object3DEventMap,
+  AxesHelper,
 } from 'three';
 import { CommonGeo } from '../geo/CommonGeo';
 // 圆柱体特有的变量
@@ -86,6 +87,7 @@ export class Cylinder extends CommonGeo {
   newX: Vector3 = new Vector3(-1, 0, 0);
   oldRotateMatrix: Matrix4 = new Matrix4();
   flagZ: number = 0;
+  rotateInfo: Quaternion | null = null;
   constructor(renderLayer: ThreeLayer) {
     super(renderLayer);
     this.getRotate(this.camera);
@@ -228,7 +230,7 @@ export class Cylinder extends CommonGeo {
     return this.buildGeoBySize();
   }
 
-  buildGeoBySize(position?: Vector3, quaternion?: Quaternion, metaData?: any) {
+  buildGeoBySize(matrix?: any, metaData?: any) {
     // 创建圆柱
     const geometry = new CylinderGeometry(
       this.radius,
@@ -248,14 +250,14 @@ export class Cylinder extends CommonGeo {
     this.originGroup.add(this.realGeo);
     this.originGroup.add(this.lineMesh);
     this.originGroup.name = 'cylinderBox';
-    this.transformGeo(position, quaternion);
+    this.transformGeo(matrix);
     this.createMiddlePlane();
     return this.originGroup;
   }
 
-  buildMaterial(metaData?:any){
+  buildMaterial(metaData?: any) {
     const materilaArrSource = [];
-    if(metaData){
+    if (metaData) {
       for (let i = 0; i < metaData.materials.length; i++) {
         if (metaData.materials[i].type !== 'MeshStandardMaterial') continue;
         const color = new Color(metaData.materials[i].color).getHexString();
@@ -274,7 +276,7 @@ export class Cylinder extends CommonGeo {
         });
         materilaArrSource.push(m);
       }
-    }else{
+    } else {
       for (let i = 0; i < 3; i++) {
         const m = new MeshStandardMaterial({
           color: 0xffff00,
@@ -288,7 +290,7 @@ export class Cylinder extends CommonGeo {
       }
     }
 
-    return materilaArrSource
+    return materilaArrSource;
   }
 
   /**
@@ -296,6 +298,10 @@ export class Cylinder extends CommonGeo {
    */
   createMiddlePlane() {
     this.middlePlane = new Plane(new Vector3(0, 1, 0));
+    const quaternion = new Quaternion();
+    this.originGroup?.matrix.clone().decompose(new Vector3(), quaternion, new Vector3());
+    const rotateMatrix = new Matrix4().makeRotationFromQuaternion(quaternion);
+    this.middlePlane.applyMatrix4(rotateMatrix);
     // this.middlePlaneHelper = new PlaneHelper(this.middlePlane,2,0xffff00)
     // this.renderLayer.scene.add(this.middlePlaneHelper)
   }
@@ -387,12 +393,9 @@ export class Cylinder extends CommonGeo {
   }
 
   // 根据落点信息 将几何体移到绘制的位置上 默认插入到原点
-  transformGeo(position?: Vector3, quaternion?: Quaternion) {
-    if (position) {
-      this.originGroup!.translateX(position.x);
-      this.originGroup!.translateZ(position.z);
-      this.originGroup!.translateY(position.y);
-      this.originGroup!.applyQuaternion(quaternion as Quaternion);
+  transformGeo(matrix?: any) {
+    if (matrix) {
+      this.originGroup?.applyMatrix4(matrix);
     } else {
       const deltaX = this.downPoint.x;
       const deltaZ = this.downPoint.z;
@@ -414,10 +417,12 @@ export class Cylinder extends CommonGeo {
     this.middlePlane!.applyMatrix4(rotateMatrix);
     // 计算出两个平面的交点坐标
     const originCenter = this.calcIntersectionDir(plane);
-    // 物体本身的旋转矩阵
-    const modelQuaternion = new Quaternion().setFromRotationMatrix(
-      this.originGroup?.matrixWorld as Matrix4
-    );
+
+    // 物体本身的旋转矩阵  -- 这里通过解构矩阵的方式 获取旋转量
+    // 之前的  setFromRotationMatrix 在物体发生缩放时，会出现旋转量不正确的问题
+    const modelQuaternion = new Quaternion();
+    this.originGroup?.matrix.clone().decompose(new Vector3(), modelQuaternion, new Vector3());
+
     this.updateSidePos(originCenter, modelQuaternion);
     this.updateDashPos(modelQuaternion);
   }
@@ -553,21 +558,20 @@ export class Cylinder extends CommonGeo {
     return UPDATE_RESIZE_CONTROL;
   }
 
-  // 将上一次的变化量 累加起来
-  setOriginGeo() {
-    const scale = this.originGroup!.scale;
-    this.totalScaleX = scale.x;
-    this.totalScaleY = scale.y;
-    this.totalScaleZ = scale.z;
-  }
-
   // resize 时 更新虚线样式
   setDashStyle(scaleValue: number) {
     // 圆柱的虚线 只需要考虑圆弧的情况
+    const modelQuaternion = new Quaternion();
+    this.originGroup?.matrix.clone().decompose(new Vector3(), modelQuaternion, new Vector3());
+    const eyeDir = this.camera.position.clone();
+    const dir = new Vector3(0, 1, 0).applyQuaternion(modelQuaternion);
+    const dotValue = eyeDir.dot(dir);
+    // 根据相机的位置  动态切换显示的虚线
+    const flagPos = Math.sign(dotValue);
     const toplineMesh = this.lineMesh.getObjectByName(CIRCLE_TOP_LINE);
     const bottomlineMesh = this.lineMesh.getObjectByName(CIRCLE_BOTTOM_LINE);
     let updateStyleObj;
-    if (this.camera.position.y > 0) {
+    if (flagPos > 0) {
       // 俯视 需要更新底部的虚线
       updateStyleObj = bottomlineMesh;
     } else {
@@ -586,6 +590,27 @@ export class Cylinder extends CommonGeo {
     this.totalScaleY = scale.y;
     this.totalScaleZ = scale.z;
   }
+
+  helpTest() {
+    const modelQuaternion = new Quaternion().setFromRotationMatrix(
+      this.originGroup?.matrix.clone() as Matrix4
+    );
+    const position = new Vector3();
+    const quaternion = new Quaternion();
+    const scale = new Vector3();
+    this.originGroup?.matrix.clone().decompose(position, quaternion, scale);
+    const xAxis = new Vector3(0, 1, 0).applyQuaternion(quaternion);
+    const pos = this.originGroup?.position?.clone() as Vector3;
+    xAxis.add(pos);
+    const line = new BufferGeometry().setFromPoints([pos, xAxis]);
+    const material2 = new LineBasicMaterial({
+      color: 'red',
+    });
+    const lineMesh = new LineSegments(line, material2);
+    this.renderLayer.scene.add(lineMesh);
+
+    console.log(modelQuaternion.normalize(), quaternion.normalize(), 'quaternion');
+  }
   scaleTotalByValue(value: number): void {
     const { totalScaleX, totalScaleY, totalScaleZ } = this;
     const newScaleX = totalScaleX * (1 + value);
@@ -601,13 +626,9 @@ export class Cylinder extends CommonGeo {
     this.totalScaleZ = scale.z;
   }
   parseData(obj: any, metaData: any): Group<Object3DEventMap> {
-    const { radiusTop , height } = obj.children[0].geometry.parameters;
+    const { radiusTop, height } = obj.children[0].geometry.parameters;
     this.radius = radiusTop;
     this.height = height;
-    return this.buildGeoBySize(
-      obj.position as Vector3,
-      obj.quaternion,
-      metaData
-    );
+    return this.buildGeoBySize(obj.matrix, metaData);
   }
 }

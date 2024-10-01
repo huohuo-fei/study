@@ -177,8 +177,6 @@ class ResizeControl extends Receiver {
 
   /** 根据传入的几何体尺寸 生成并挂载 resize 控制器 */
   registerControl(obj: CommonGeo) {
-    console.log(obj, 'obj');
-
     const {
       width,
       height,
@@ -196,20 +194,19 @@ class ResizeControl extends Receiver {
       this.w = radius * 2;
       this.d = 0;
     }
-    console.log(width, height, depth, 'width, height, depth,');
-
     this.initResize();
     this.lineMesh && this.resizeGroup.add(this.lineMesh);
     this.resizeGroup.renderOrder = TOP_RENDER_ORDER + 1;
-    // debugger
     obj.originGroup?.add(this.resizeGroup);
 
     // 获取物体最新的缩放比 更新
     this.totalScaleX = totalScaleX;
     this.totalScaleY = totalScaleY;
     this.totalScaleZ = totalScaleZ;
-    // this.updateSize(resizeDir.right, 0);
-    // this.updateSize(resizeDir.front, 0);
+    this.updateSize(resizeDir.right, 0);
+    if(!radius){
+      this.updateSize(resizeDir.front, 0);
+    }
   }
 
   /** 销毁指定对象的 控制器 */
@@ -393,11 +390,6 @@ class ResizeControl extends Receiver {
   updateSize(dir: string, distance: number) {
     this.scaleCircle(dir, distance);
     this.scaleCylinder(dir, distance);
-
-    if (this.d === 0 && dir === 'right') {
-      // this.scaleCircle('front', distance);
-      // this.scaleCylinder('front', distance);
-    }
   }
 
   // 缩放圆点  -- 不论选择哪个方向缩放，都需要重置控制点的大小
@@ -472,9 +464,10 @@ class ResizeControl extends Receiver {
         let sclaeXZ = totalScaleZ
         if(this.d === 0){
           sclaeXZ = scaleX
+          this.cylinderRight.scale.set(1 / totalScaleY, 1, 1 / sclaeXZ);
         }
         this.cylinderUp.scale.set(1 / scaleX, 1, 1 / sclaeXZ);
-        this.cylinderFront.scale.set(1 / scaleX, 1, 1 / sclaeXZ);
+        this.cylinderFront.scale.set(1 / scaleX, 1, 1 / totalScaleY);
         break;
       case resizeDir.front:
         const scaleZ = totalScaleZ + distance / this.d;

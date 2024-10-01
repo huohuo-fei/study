@@ -16,7 +16,7 @@ export enum GeoType {
 }
 export class RenderLayer extends Receiver {
   threeLayer: ThreeLayer;
-  geoType: GeoType = GeoType.cylinder;
+  geoType: GeoType = GeoType.cube;
   geoBase?: GeoBase;
   uiCanvas: HTMLCanvasElement;
   topCanvas: HTMLCanvasElement;
@@ -131,8 +131,19 @@ export class RenderLayer extends Receiver {
   renderBg() {
     if (this.bgCtx) {
       // 背景色
-      this.bgCtx.fillStyle = '#39597e';
-      this.bgCtx.fillRect(0, 0, this.width, this.height);
+      this.bgCtx.fillStyle ='#27453e'
+
+// 创建一个径向渐变
+  // const gradient = this.bgCtx.createRadialGradient(this.width / 2, this.height / 2, 0, this.width / 2, this.height / 2, this.width / 2);
+
+  // // 添加颜色停止点
+  // gradient.addColorStop(0, '#27453e'); // 中心点为白色
+  // gradient.addColorStop(1, '#27453e'); // 外围为黑色
+
+  // // // 将渐变应用到画布上
+  // this.bgCtx.fillStyle = gradient;
+this.bgCtx.fillRect(0, 0, this.width, this.height);
+
 
       // 读取缓存中的图片
       const cacheCanvas = this.cacheSnapshot.cacheCanvas

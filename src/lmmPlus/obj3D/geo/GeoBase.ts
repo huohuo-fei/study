@@ -156,7 +156,6 @@ export class GeoBase {
   // 旋转几何体 并更新相应的虚线
   rotateGeo(quaternion: Quaternion) {
     this.originGroup!.applyQuaternion(quaternion);
-    const axis_y_rotate = new Quaternion().setFromRotationMatrix(this.originGroup.matrix)
     this.geoObj.updateDash(quaternion,this.eyeDirVerPlane)
   }
 
@@ -165,6 +164,7 @@ export class GeoBase {
   }
   resizeGeoEnd() {
     this.geoObj.saveOutSize();
+    this.rotateGeo(new Quaternion())
   }
 
   /**

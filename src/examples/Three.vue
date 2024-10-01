@@ -82,9 +82,9 @@ const changeFillColor = (none?: string) => {
     renderLayer.dispatchEvent({ type: 'changeFillColor', color: 'none' });
     return;
   }
-  const r = Math.floor(Math.random() * 255);
-  const g = Math.floor(Math.random() * 255);
-  const b = Math.floor(Math.random() * 255);
+  const r = Math.floor(Math.random() * 56) + 200;
+  const g = Math.floor(Math.random() * 201);
+  const b = Math.floor(Math.random() * 201);
   const newFillColor = `rgb(${r},${g},${b})`;
   renderLayer.dispatchEvent({ type: 'changeFillColor', color: newFillColor });
 };
@@ -108,7 +108,7 @@ const changeGeoType = (event:Event) =>{
       class="canvas-container"
     ></div>
     <div class="side">
-    <select :value="geoType" @change="changeGeoType">
+    <select class="select" :value="geoType" @change="changeGeoType">
       <option :value="GeoType.cube">立方体</option>
       <option :value="GeoType.cylinder">圆柱体</option>
       <!-- <option :value="GeoType.cone">圆锥体</option> -->
@@ -166,9 +166,15 @@ const changeGeoType = (event:Event) =>{
   left: 0;
 }
 
+.select{
+  margin-left: 10px;
+}
+
 hr{
 box-sizing: border-box;
 margin-right: 10px;
 }
 
 </style>
+
+
