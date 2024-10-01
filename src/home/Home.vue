@@ -13,8 +13,8 @@ const router = useRouter()
       <section>
         <h2>案例</h2>
         <aside>
-          <button @click="router.push('test-path')">2D画布</button>
           <button @click="router.push('test-three')">3D画布</button>
+          <button @click="router.push('test-path')">2D画布</button>
         </aside>
       </section>
     </main>

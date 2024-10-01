@@ -11,8 +11,8 @@ import { Snapshot } from './snapshot';
 
 export enum GeoType {
   cube = 'cube',
-  cone='cone',
-  cylinder='cylinder'
+  cone = 'cone',
+  cylinder = 'cylinder',
 }
 export class RenderLayer extends Receiver {
   threeLayer: ThreeLayer;
@@ -28,8 +28,8 @@ export class RenderLayer extends Receiver {
   uiCtx: CanvasRenderingContext2D | null;
   bgCtx: CanvasRenderingContext2D | null;
   eventType: eventType = eventType.draw3D;
-  cacheSnapshot:Snapshot
-  isForceRenderBg:boolean = false
+  cacheSnapshot: Snapshot;
+  isForceRenderBg: boolean = false;
 
   constructor(uiCanvas: HTMLCanvasElement, bgCanvas: HTMLCanvasElement) {
     super();
@@ -46,7 +46,7 @@ export class RenderLayer extends Receiver {
     this.topCanvas2.height = height;
     this.threeLayer = new ThreeLayer(this.topCanvas, this);
     this.geoBase = new GeoBase(this.threeLayer);
-    this.cacheSnapshot = new Snapshot(this)
+    this.cacheSnapshot = new Snapshot(this);
     this.threeLayer.geoBase = this.geoBase;
     this.uiCtx = this.uiCanvas.getContext('2d');
     this.bgCtx = this.bgCanvas.getContext('2d');
@@ -71,7 +71,6 @@ export class RenderLayer extends Receiver {
         break;
       case eventType.select || eventType.transform3d:
         this.threeLayer.transformControl.onPointerdown(event, customEvent);
-
     }
   }
 
@@ -91,7 +90,6 @@ export class RenderLayer extends Receiver {
         break;
       case eventType.select:
         this.threeLayer.transformControl.onPointermove(event, customEvent);
-
     }
   }
 
@@ -116,38 +114,37 @@ export class RenderLayer extends Receiver {
   }
 
   renderDraw() {
-    if(this.isForceRenderBg){
-      this.renderBg()
-      this.isForceRenderBg = false
+    if (this.isForceRenderBg) {
+      this.renderBg();
+      this.isForceRenderBg = false;
     }
     this.uiCtx?.clearRect(0, 0, this.width, this.height);
     this.threeLayer.render();
     this.uiCtx?.drawImage(this.topCanvas, 0, 0);
     requestAnimationFrame(() => {
       this.renderDraw();
-    })
+    });
   }
 
   renderBg() {
     if (this.bgCtx) {
       // 背景色
-      this.bgCtx.fillStyle ='#27453e'
+      this.bgCtx.fillStyle = '#27453e';
 
-// 创建一个径向渐变
-  // const gradient = this.bgCtx.createRadialGradient(this.width / 2, this.height / 2, 0, this.width / 2, this.height / 2, this.width / 2);
+      // 创建一个径向渐变
+      // const gradient = this.bgCtx.createRadialGradient(this.width / 2, this.height / 2, 0, this.width / 2, this.height / 2, this.width / 2);
 
-  // // 添加颜色停止点
-  // gradient.addColorStop(0, '#27453e'); // 中心点为白色
-  // gradient.addColorStop(1, '#27453e'); // 外围为黑色
+      // // 添加颜色停止点
+      // gradient.addColorStop(0, '#27453e'); // 中心点为白色
+      // gradient.addColorStop(1, '#27453e'); // 外围为黑色
 
-  // // // 将渐变应用到画布上
-  // this.bgCtx.fillStyle = gradient;
-this.bgCtx.fillRect(0, 0, this.width, this.height);
-
+      // // // 将渐变应用到画布上
+      // this.bgCtx.fillStyle = gradient;
+      this.bgCtx.fillRect(0, 0, this.width, this.height);
 
       // 读取缓存中的图片
-      const cacheCanvas = this.cacheSnapshot.cacheCanvas
-      this.bgCtx.drawImage(cacheCanvas,0,0)
+      const cacheCanvas = this.cacheSnapshot.cacheCanvas;
+      this.bgCtx.drawImage(cacheCanvas, 0, 0);
     }
   }
 
@@ -157,10 +154,8 @@ this.bgCtx.fillRect(0, 0, this.width, this.height);
 
   loopRender() {
     // setInterval(() => {
-      this.renderDraw();
+    this.renderDraw();
     // }, 30);
-
-
   }
 
   changeMode(eventType: eventType) {
@@ -175,22 +170,22 @@ this.bgCtx.fillRect(0, 0, this.width, this.height);
     this.eventType = mode;
   }
 
-  onSendDisactive(){
-    this.dispatchEvent({type:'disActiveObj'})
+  onSendDisactive() {
+    this.dispatchEvent({ type: 'disActiveObj' });
   }
-  onSendSwitchMode(mode:eventType){
-    this.changeMode(mode)
+  onSendSwitchMode(mode: eventType) {
+    this.changeMode(mode);
     this.dispatchEvent({
       type: 'switchGeoMode',
       mode,
     });
   }
-  onSendActiveObj(){
+  onSendActiveObj() {
     this.dispatchEvent({
       type: 'activeObj',
     });
   }
-  onSendDisActiveObj(){
+  onSendDisActiveObj() {
     this.dispatchEvent({
       type: 'disActiveObj',
     });
@@ -208,11 +203,10 @@ this.bgCtx.fillRect(0, 0, this.width, this.height);
         this.threeLayer.fillCon.changeColor(event.color);
       }
     });
-    this.addEventListener('switchGeoType',(event) => {
-      if(event.value){
-        console.log(event.value,'event.value');
-        this.geoType = event.value
+    this.addEventListener('switchGeoType', (event) => {
+      if (event.value) {
+        this.geoType = event.value;
       }
-    })
+    });
   }
 }

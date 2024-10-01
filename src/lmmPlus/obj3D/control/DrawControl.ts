@@ -126,7 +126,6 @@ class DrawControl extends Receiver {
     const deltaX = upx - mistakePoint[0];
     const deltaY = upy - mistakePoint[1];
     const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
     if (distance < MIN_BOTTOM_LENGTH) {
       const [x, y] = converCoordinateTo3D(
         upx,
@@ -141,7 +140,8 @@ class DrawControl extends Receiver {
         this.renderLayer.floorPlank
       );
       this.renderLayer.geoBase.createDefaultGeo(this.bottomPointStart,pointPos)
-      this.isDraw = false
+      this.isDraw = false;
+      this.isBottom = true;
       this.removeObj();
     }
     this.mistakePoint = []

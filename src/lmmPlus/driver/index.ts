@@ -22,7 +22,7 @@ class Driver {
   dPointerDown(event: PointerEvent) {
     for (const recriver of this.listener) {
       const dom = recriver.getDomElement();
-      if (dom !== event.target) return;
+      if (dom !== event.target) continue;
       const { rawEvent, customEvent } = this.converEvent(event, recriver);
       recriver.onPointerdown(rawEvent, customEvent);
     }
@@ -30,7 +30,7 @@ class Driver {
   dPointerMove(event: PointerEvent) {
     for (const recriver of this.listener) {
       const dom = recriver.getDomElement();
-      if (dom !== event.target) return;
+      if (dom !== event.target) continue;
       const { rawEvent, customEvent } = this.converEvent(event, recriver);
       recriver.onPointermove(rawEvent, customEvent);
     }
@@ -38,7 +38,7 @@ class Driver {
   dPointerUp(event: PointerEvent) {
     for (const recriver of this.listener) {
       const dom = recriver.getDomElement();
-      if (dom !== event.target) return;
+      if (dom !== event.target) continue;
       const { rawEvent, customEvent } = this.converEvent(event, recriver);
       recriver.onPointerup(rawEvent, customEvent);
     }

@@ -37,6 +37,7 @@ import {
   CIRCLE_BOTTOM_LINE,
   DEFAULT_RADIUS,
   DEFAULT_HEIGHT,
+  MIN_SIZE_H,
 } from './const/cylinderConst';
 
 // 全局变量
@@ -214,8 +215,14 @@ export class Cylinder extends CommonGeo {
 
   // 根据之前绘制的三维线框 在画布原点绘制一个几何体
   createGeo() {
-    this.dirHeight = this.height;
     this.height = Math.abs(this.height);
+    if (Math.abs(this.height) < MIN_SIZE_H) {
+      this.dirHeight = 0;
+      this.height = MIN_SIZE_H;
+    } else {
+      this.dirHeight = this.height;
+      this.height = Math.abs(this.height);
+    }
     return this.buildGeoBySize();
   }
 
@@ -224,9 +231,11 @@ export class Cylinder extends CommonGeo {
    * @param {boolean} isDefauleHeight 是否启用 设置默认的拉伸高度  不启用，所有的尺寸都是默认的 启用 高度值是默认的
    * @returns
    */
-  createDefaultGeo(startPoint: Vector3, endPoint: Vector3) {
-    this.radius = true ? this.radius : DEFAULT_RADIUS;
-    this.height = true ? DEFAULT_STRETCH : DEFAULT_HEIGHT;
+  createDefaultGeo(startPoint: Vector3, endPoint: Vector3) { 
+    this.downPoint.copy(startPoint);
+    this.upPoint.copy(endPoint);
+    this.radius =  DEFAULT_RADIUS;
+    this.height =  DEFAULT_HEIGHT;
     return this.buildGeoBySize();
   }
 

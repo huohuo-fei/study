@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
-import { eventType } from './lmmPlus/driver';
+import { onMounted, ref ,provide} from 'vue';
+import { RenderApp } from './lmmPlus/obj3D';
+const renderKit = RenderApp;
+provide('renderKit', renderKit);
 const containerRef = ref<HTMLDivElement>();
 const size = ref<{ width: number | undefined; height: number | undefined }>({
   width: 0,

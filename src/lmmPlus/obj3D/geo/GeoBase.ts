@@ -41,6 +41,8 @@ export class GeoBase {
   eyeDirVerPlane!: Plane;
   constructor(renderLayer: ThreeLayer) {
     this.renderLayer = renderLayer;
+    this.createPlane();
+
   }
 
   // 读取当前的类型，只有在实例对象时 需要读取，其余的情况，都使用内部的geotype
@@ -125,7 +127,6 @@ export class GeoBase {
 
   createGeo() {
     this.originGroup = this.geoObj.createGeo();
-    this.createPlane();
     this.buildGeo();
   }
 
@@ -139,7 +140,7 @@ export class GeoBase {
 
   createDefaultGeo(startPoint: Vector3, endPoint: Vector3) {
     if (!this.geoObj) {
-      this.setGeoObj();
+      this.setGeoObj(); 
     }
     this.originGroup = this.geoObj.createDefaultGeo(startPoint, endPoint);
     this.buildGeo();

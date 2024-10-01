@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, defineProps, onMounted, ref } from 'vue';
-import { RenderApp } from '../lmmPlus/obj3D';
+import { computed, defineProps, onMounted, ref ,inject, onUnmounted} from 'vue';
+import { IWbApp } from '../lmmPlus/obj3D';
 import { eventType } from '../lmmPlus/driver';
 import { RenderLayer } from '../lmmPlus/obj3D/renderLayer';
 import { useRouter } from 'vue-router';
@@ -18,7 +18,7 @@ const props = defineProps({
 });
 const router = useRouter()
 const canvasContainer = ref<HTMLCanvasElement>();
-const renderKit = RenderApp;
+const renderKit= inject('renderKit') as IWbApp
 let renderLayer: RenderLayer;
 const snapshotLength = ref(0)
 const disActiveObj = ref(false)
@@ -51,6 +51,10 @@ onMounted(() => {
     initRenderLayer();
   }
 });
+
+onUnmounted(() => {
+  renderKit.removeLayer(renderLayer);
+})
 
 /** 模式切换 S */
 enum geoMode {
