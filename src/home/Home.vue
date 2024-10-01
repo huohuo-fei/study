@@ -1,6 +1,21 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-const router = useRouter()
+const router = useRouter();
+const copy = (text: string) => {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function () {
+      alert('复制成功~');
+    });
+  } else {
+    const aux = document.createElement('input');
+    aux.setAttribute('value', text);
+    document.body.appendChild(aux);
+    aux.select();
+    document.execCommand('copy');
+    document.body.removeChild(aux);
+    alert('复制成功');
+  }
+};
 </script>
 
 <template>
@@ -18,6 +33,20 @@ const router = useRouter()
         </aside>
       </section>
     </main>
+    <div class="link">
+      <a href="https://github.com/huohuo-fei/study" target="_blank">
+        <img src="../assets/github.svg" alt="github" srcset="" />
+      </a>
+      <a href="https://gitee.com/huohuofei/canvas2d" target="_blank">
+        <img src="../assets/gitee.svg" alt="gitee" href="" />
+      </a>
+      <img
+        src="../assets/wx.svg"
+        alt="wx"
+        title="h_f_qwer"
+        @click="copy('h_f_qwer')"
+      />
+    </div>
   </div>
 </template>
 
@@ -32,18 +61,32 @@ const router = useRouter()
     section {
       width: 50%;
 
-      aside{
+      aside {
         display: flex;
         flex-direction: column;
         align-items: center;
 
-        button{
+        button {
           width: 100px;
           height: 30px;
           margin-bottom: 10px;
         }
       }
     }
+  }
+}
+
+.link {
+  position: absolute;
+  top: 0;
+  right: 20px;
+
+  img {
+    width: 30px;
+    height: 30px;
+    margin-left: 10px;
+    border-radius: 50%;
+    cursor: pointer;
   }
 }
 </style>
