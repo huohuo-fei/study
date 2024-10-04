@@ -10,8 +10,10 @@
     "test": "vitest --root src"
   },
   "dependencies": {
+    "@highlightjs/vue-plugin": "^2.1.0",
     "@types/three": "^0.167.1",
     "css-loader": "^7.1.2",
+    "highlight.js": "^11.10.0",
     "less": "^4.2.0",
     "normalize.css": "^8.0.1",
     "style-loader": "^4.0.0",

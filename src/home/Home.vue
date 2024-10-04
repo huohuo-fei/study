@@ -12,7 +12,7 @@ const copy = (text: string) => {
     document.body.appendChild(aux);
     aux.select();
     document.execCommand('copy');
-    document.body.removeChild(aux);
+    document.body.removeChild(aux); 
     alert('复制成功');
   }
 };
@@ -24,6 +24,9 @@ const copy = (text: string) => {
     <main>
       <section>
         <h2>浅谈</h2>
+        <aside>
+          <button @click="router.push('blog-canvas-01')">canvas相对变换、绝对变换</button>
+        </aside>
       </section>
       <section>
         <h2>案例</h2>
@@ -67,7 +70,7 @@ const copy = (text: string) => {
         align-items: center;
 
         button {
-          width: 100px;
+          min-width: 100px;
           height: 30px;
           margin-bottom: 10px;
         }
