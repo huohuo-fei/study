@@ -215,7 +215,6 @@ export class Cylinder extends CommonGeo {
 
   // 根据之前绘制的三维线框 在画布原点绘制一个几何体
   createGeo() {
-    this.height = Math.abs(this.height);
     if (Math.abs(this.height) < MIN_SIZE_H) {
       this.dirHeight = 0;
       this.height = MIN_SIZE_H;
