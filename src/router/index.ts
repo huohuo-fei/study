@@ -17,6 +17,10 @@ const routes = [
     path:'/blog-canvas-01',
     component:() => import('../blog/Canvas_01.vue')
   },
+  {
+    path:'/blog-canvas-02',
+    component:() => import('../blog/Canvas_02.vue')
+  },
 
 ]
 
