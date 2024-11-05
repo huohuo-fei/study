@@ -27,6 +27,7 @@ const copy = (text: string) => {
         <aside>
           <button @click="router.push('blog-canvas-01')">canvas相对变换、绝对变换</button>
           <button @click="router.push('blog-canvas-02')">canvas中矩阵乘法顺序的理解</button>
+          <button @click="router.push('blog-canvas-03')">canvas 基点变换</button>
         </aside>
       </section>
       <section>
