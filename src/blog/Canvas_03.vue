@@ -112,7 +112,7 @@ function draw3() {
 
   ctx.save()
   ctx.fillStyle = 'rgba(255, 255,0, .3)';
-  const scaleMatrix = new Matrix3().makeScale(2, 2, 2)
+  const scaleMatrix = new Matrix3().makeScale(2, 2)
   const tranRectMatrix = new Matrix3().makeTranslation(-deltaT, -deltaT)
   const matrix = translateMatrixOrigin.clone().multiply(tranRectMatrix).multiply(scaleMatrix)
   ctx.transform(
@@ -161,7 +161,7 @@ function draw4() {
 
   ctx.save()
   ctx.fillStyle = 'rgba(255, 255,0, .3)';
-  const scaleMatrix = new Matrix3().makeScale(2, 2, 2)
+  const scaleMatrix = new Matrix3().makeScale(2, 2)
   const tranRectMatrix = new Matrix3().makeTranslation(-deltaT2, -deltaT2)
   const matrix = translateMatrixOrigin.clone().multiply(scaleMatrix).multiply(tranRectMatrix)
   ctx.transform(
@@ -210,8 +210,8 @@ function draw5() {
 
   ctx.save()
   ctx.fillStyle = 'rgba(255, 255,0, .3)';
-  const scaleMatrix = new Matrix3().makeScale(2, 2, 2)
-  const tranRectMatrix = new Matrix3().makeTranslation(-deltaT3/2, -deltaT3/2)
+  const scaleMatrix = new Matrix3().makeScale(2, 2)
+  const tranRectMatrix = new Matrix3().makeTranslation(-deltaT3 / 2, -deltaT3 / 2)
   const matrix = translateMatrixOrigin.clone().multiply(scaleMatrix).multiply(tranRectMatrix)
   ctx.transform(
     matrix.elements[0],
@@ -256,6 +256,216 @@ onMounted(() => {
   draw4();
   draw5();
 });
+
+const code1 = `
+  ctx.fillStyle = 'skyblue';
+  ctx.fillRect(0, 0, 50, 50);
+  // 位移 (150,100)
+  ctx.translate(150, 100);
+  ctx.fillRect(0, 0, 50, 50);
+
+  // 旋转 45
+  ctx.rotate(Math.PI / 4);
+  ctx.fillStyle = 'yellow';
+  ctx.fillRect(0, 0, 50, 50);
+
+  // 缩放 (2,3)
+  ctx.scale(2, 3);
+  ctx.fillStyle = 'rgba(255,0,0,0.5)';
+  ctx.fillRect(0, 0, 50, 50);
+`
+
+const code2 = `
+function draw2() {
+  if (scale2 > 2 || scale2 < 1) {
+    dir2 *= -1;
+  }
+  scale2 += 0.004 * dir2;
+  if (!canvasRef2.value) return;
+  const ctx = canvasRef2.value.getContext('2d') as CanvasRenderingContext2D;
+  ctx.clearRect(-300, -300, 600, 600);
+  ctx.resetTransform();
+  drawGrid(ctx);
+  const translateMatrix = new Matrix3().makeTranslation(150, 100);
+  const translateMatrixOrigin = translateMatrix.clone();
+  const scaleMatrix = new Matrix3().makeScale(scale2, 1.2 * scale2);
+  const posToCenterMatrix = new Matrix3().makeTranslation(-25, -25);
+  const posToCenterMatrixInvert = new Matrix3().makeTranslation(25, 25);
+
+  ctx.save();
+  ctx.transform(
+    translateMatrixOrigin.elements[0],
+    translateMatrixOrigin.elements[1],
+    translateMatrixOrigin.elements[3],
+    translateMatrixOrigin.elements[4],
+    translateMatrixOrigin.elements[6],
+    translateMatrixOrigin.elements[7]
+  )
+
+  ctx.fillStyle = 'rgba(255,255,0,1)';
+  ctx.fillRect(0, 0, 50, 50);
+  ctx.restore();
+
+  const matrix = new Matrix3()
+    .multiply(translateMatrix)
+    .multiply(posToCenterMatrixInvert)
+    .multiply(scaleMatrix)
+    .multiply(posToCenterMatrix);
+  ctx.transform(
+    matrix.elements[0],
+    matrix.elements[1],
+    matrix.elements[3],
+    matrix.elements[4],
+    matrix.elements[6],
+    matrix.elements[7]
+  );
+  ctx.fillStyle = 'rgba(255,0,0,0.5)';
+  ctx.fillRect(0, 0, 50, 50);
+  requestAnimationFrame(draw2);
+}`
+
+const code3 = `
+function draw3() {
+  if (!canvasRef3.value) return;
+  if (deltaT > 100 || deltaT < 0) {
+    deltaDir *= -1
+  }
+  deltaT += 0.3 * deltaDir
+
+
+  const ctx = canvasRef3.value.getContext('2d') as CanvasRenderingContext2D;
+  ctx.clearRect(-300, -300, 1000, 1000);
+  ctx.resetTransform();
+  drawGrid(ctx);
+  // 这个矩阵是为了将画布中心移到(200,200),方便观察效果
+  const translateMatrix = new Matrix3().makeTranslation(100, 100);
+  const translateMatrixOrigin = translateMatrix.clone();
+  ctx.save();
+  ctx.transform(
+    translateMatrixOrigin.elements[0],
+    translateMatrixOrigin.elements[1],
+    translateMatrixOrigin.elements[3],
+    translateMatrixOrigin.elements[4],
+    translateMatrixOrigin.elements[6],
+    translateMatrixOrigin.elements[7]
+  )
+
+  ctx.fillStyle = 'rgba(135, 206, 235, .5)';
+  ctx.fillRect(0, 0, 100, 100);
+  ctx.restore();
+
+  ctx.save()
+  ctx.fillStyle = 'rgba(255, 255,0, .3)';
+  const scaleMatrix = new Matrix3().makeScale(2, 2)
+  const tranRectMatrix = new Matrix3().makeTranslation(-deltaT, -deltaT)
+  const matrix = translateMatrixOrigin.clone().multiply(tranRectMatrix).multiply(scaleMatrix)
+  ctx.transform(
+    matrix.elements[0],
+    matrix.elements[1],
+    matrix.elements[3],
+    matrix.elements[4],
+    matrix.elements[6],
+    matrix.elements[7])
+  ctx.fillRect(0, 0, 100, 100);
+  ctx.restore()
+
+  requestAnimationFrame(draw3);
+}`
+
+const code4 = `
+function draw4() {
+  if (!canvasRef4.value) return;
+  if (deltaT2 > 100 || deltaT2 < 0) {
+    deltaDir2 *= -1
+  }
+  deltaT2 += 0.3 * deltaDir2
+
+
+  const ctx = canvasRef4.value.getContext('2d') as CanvasRenderingContext2D;
+  ctx.clearRect(-300, -300, 1000, 1000);
+  ctx.resetTransform();
+  drawGrid(ctx);
+  // 这个矩阵是为了将画布中心移到(200,200),方便观察效果
+  const translateMatrix = new Matrix3().makeTranslation(100, 100);
+  const translateMatrixOrigin = translateMatrix.clone();
+  ctx.save();
+  ctx.transform(
+    translateMatrixOrigin.elements[0],
+    translateMatrixOrigin.elements[1],
+    translateMatrixOrigin.elements[3],
+    translateMatrixOrigin.elements[4],
+    translateMatrixOrigin.elements[6],
+    translateMatrixOrigin.elements[7]
+  )
+
+  ctx.fillStyle = 'rgba(135, 206, 235, .5)';
+  ctx.fillRect(0, 0, 100, 100);
+  ctx.restore();
+
+  ctx.save()
+  ctx.fillStyle = 'rgba(255, 255,0, .3)';
+  const scaleMatrix = new Matrix3().makeScale(2, 2)
+  const tranRectMatrix = new Matrix3().makeTranslation(-deltaT2, -deltaT2)
+  const matrix = translateMatrixOrigin.clone().multiply(scaleMatrix).multiply(tranRectMatrix)
+  ctx.transform(
+    matrix.elements[0],
+    matrix.elements[1],
+    matrix.elements[3],
+    matrix.elements[4],
+    matrix.elements[6],
+    matrix.elements[7])
+  ctx.fillRect(0, 0, 100, 100);
+  ctx.restore()
+
+  requestAnimationFrame(draw4);
+}
+`
+const code5 = `function draw5() {
+  if (!canvasRef5.value) return;
+  if (deltaT3 > 100 || deltaT3 < 0) {
+    deltaDir3 *= -1
+  }
+  deltaT3 += 0.6 * deltaDir3
+
+
+  const ctx = canvasRef5.value.getContext('2d') as CanvasRenderingContext2D;
+  ctx.clearRect(-300, -300, 1000, 1000);
+  ctx.resetTransform();
+  drawGrid(ctx);
+  // 这个矩阵是为了将画布中心移到(200,200),方便观察效果
+  const translateMatrix = new Matrix3().makeTranslation(100, 100);
+  const translateMatrixOrigin = translateMatrix.clone();
+  ctx.save();
+  ctx.transform(
+    translateMatrixOrigin.elements[0],
+    translateMatrixOrigin.elements[1],
+    translateMatrixOrigin.elements[3],
+    translateMatrixOrigin.elements[4],
+    translateMatrixOrigin.elements[6],
+    translateMatrixOrigin.elements[7]
+  )
+
+  ctx.fillStyle = 'rgba(135, 206, 235, .5)';
+  ctx.fillRect(0, 0, 100, 100);
+  ctx.restore();
+
+  ctx.save()
+  ctx.fillStyle = 'rgba(255, 255,0, .3)';
+  const scaleMatrix = new Matrix3().makeScale(2, 2)
+  const tranRectMatrix = new Matrix3().makeTranslation(-deltaT3 / 2, -deltaT3 / 2)
+  const matrix = translateMatrixOrigin.clone().multiply(scaleMatrix).multiply(tranRectMatrix)
+  ctx.transform(
+    matrix.elements[0],
+    matrix.elements[1],
+    matrix.elements[3],
+    matrix.elements[4],
+    matrix.elements[6],
+    matrix.elements[7])
+  ctx.fillRect(0, 0, 100, 100);
+  ctx.restore()
+
+  requestAnimationFrame(draw5);
+}`
 </script>
 
 <template>
@@ -267,11 +477,13 @@ onMounted(() => {
       </p>
       <canvas width="300" height="300" ref="canvasRef1" class="canvas"></canvas>
       <p class="text-label">注1：由上图可知，平移、缩放、旋转，都是针对坐标原点(旋转和缩放的基点，是第一次执行平移后的原点)</p>
+      <highlightjs language="JavaScript" :autodetect="false" :code="code1"></highlightjs>
       <p>这种基于原点的变换，并不能满足开发中的所有场景。我们需要想要基于物体的中心点、左上角点、任意点进行变换。
         将变换的原点移动到我们指定的位置，这就是<strong>基点变换</strong>。</p>
       <br />
       <canvas width="300" height="300" ref="canvasRef2" class="canvas"></canvas>
       <p class="text-label">注2：上图缩放变换的基点，就是图形的中心点。</p>
+      <highlightjs language="JavaScript" :autodetect="false" :code="code2"></highlightjs>
       <p>canvas 的变换机制我们无法改变(基于画布原点)，但我们可以通过<strong>多个变换</strong>的组合，达到预期的效果。
         举例来说：已知画布上有一个 2x2 的矩形(矩形的左上角点和画布的原点重合)，现在想要缩放到 4x4,条件是不能改变矩形的中心位置。</p>
       <p>现在停下来想一想，如果将2x2的矩形以中心缩放的形式缩放到4x4，那么现在矩形的位置在哪(即左上角点)?
@@ -282,6 +494,7 @@ onMounted(() => {
       <canvas width="300" height="300" ref="canvasRef3" class="canvas"></canvas>
       <p class="text-label">注3：上图中，我们在缩放开始之前，先进行平移变换。让物体的中心点和坐标原点重合后(此时平移100)，
         再次乘上缩放矩阵，此时就是中心平移的效果</p>
+      <highlightjs language="JavaScript" :autodetect="false" :code="code3"></highlightjs>
       <p>仔细观察我们的变换矩阵 <code>matrix = mto * mt * ms</code> ，除了最开始的<code>translateMatrixOrigin</code>
         矩阵之外(将坐标原点200x200 方便观察)，还有一个位移矩阵和缩放矩阵。</p>
       <p>通过上一章，我们知道这个矩阵改如何解释:从左往右理解,先将 <strong>画布</strong> 位移-100*-100，之后再将 <strong>画布</strong> 扩大一倍。
@@ -292,6 +505,7 @@ onMounted(() => {
       <canvas width="300" height="300" ref="canvasRef4" class="canvas"></canvas>
       <p class="text-label">注4：现在的矩阵顺序<code>matrix = mto * ms * mt</code>
       </p>
+      <highlightjs language="JavaScript" :autodetect="false" :code="code4"></highlightjs>
       <p>
         此时物体的大小是我们所期望的，但并不是中心缩放！
         我们可以想想发生了什么，从左往右：画布先扩大了一倍，然后画布移动-100 * -100，从右往左，物体移动-100 * -100，物体扩大一倍。
@@ -308,6 +522,8 @@ onMounted(() => {
       </p>
       <canvas width="300" height="300" ref="canvasRef5" class="canvas"></canvas>
       <p class="text-label">注5：现在的效果和注3一样了，但矩阵的顺序却发生了变化</p>
+      <highlightjs language="JavaScript" :autodetect="false" :code="code5"></highlightjs>
+
     </div>
   </div>
 </template>
