@@ -8,7 +8,8 @@ export class PenHelper implements IPenHelper {
     centerPoint: { x: number; y: number } = { x: 0, y: 0 };
     perPoint: { x: number; y: number } = { x: 0, y: 0 };
     nextPoint: { x: number; y: number } = { x: 0, y: 0 };
-    originPoint:Point|null  = null
+    originPoint: Point | null = null
+    selectControlType: "per" | "next" | "center" = "center"
     constructor() {
         this.link = true
     }
@@ -30,7 +31,7 @@ export class PenHelper implements IPenHelper {
         ctx.fillStyle = ToolPenConst.HELPER_COLOR
         ctx.setLineDash([5])
         ctx.beginPath();
-        if(this.link){
+        if (this.link) {
             ctx.moveTo(this.perPoint.x, this.perPoint.y);
             ctx.lineTo(this.nextPoint.x, this.nextPoint.y);
             ctx.stroke();
@@ -44,17 +45,36 @@ export class PenHelper implements IPenHelper {
         ctx.restore()
     }
 
-    searchPoint(x: number, y: number,ctx:CanvasRenderingContext2D) {
+    searchPoint(x: number, y: number, ctx: CanvasRenderingContext2D) {
         ctx.save()
         ctx.beginPath()
         ctx.arc(this.perPoint.x, this.perPoint.y, ToolPenConst.HELPER_RADIUS, 0, Math.PI * 2);
-       const isPer =  ctx.isPointInPath(x,y)
-       console.log(isPer,'isper');
-       
-
-        
-        
+        const isPer = ctx.isPointInPath(x, y)
+        if (isPer) {
+            this.selectControlType = "next"
+            return
+        }
+        ctx.beginPath()
+        ctx.arc(this.nextPoint.x, this.nextPoint.y, ToolPenConst.HELPER_RADIUS, 0, Math.PI * 2);
+        const isNext = ctx.isPointInPath(x, y)
+        if (isNext) {
+            this.selectControlType = "per"
+            return
+        }
+        this.selectControlType = "center"
     }
+
+    onPointermove(event: PointerEvent) {
+        if(this.selectControlType === "per" || this.selectControlType === "next"){
+            this.originPoint?.updateControlPointByDir(event,this.selectControlType)
+            this.updateHelper(this.originPoint as Point)
+        }
+    }
+    onPointerup(event: PointerEvent) {
+        this.selectControlType = "center"
+    }
+
+
 
 
 }

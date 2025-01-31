@@ -24,13 +24,30 @@ export class Point implements BezierPoint {
         }
 
     }
+    updateControlPointByDir(e: PointerEvent,dir:'per'|'next') {
+        const { clientX, clientY } = e
+        if (this.link) {
+            this.symmetric(clientX, clientY,dir)
+        } else {
+
+        }
+
+    }
 
     // 中心对称   -----暂时只考虑 绘制中  不考虑修改的情况
-    private symmetric(x: number, y: number) {
-        this.nextControlPoint.updatePoint(x, y) 
-        const deltaX = x - this.x
-        const deltaY = y - this.y
-        this.perControlPoint.updatePoint(this.x - deltaX, this.y - deltaY)
+    private symmetric(x: number, y: number,dir='per') {
+        if(dir === 'next'){
+            this.perControlPoint.updatePoint(x, y) 
+            const deltaX = x - this.x
+            const deltaY = y - this.y
+            this.nextControlPoint.updatePoint(this.x - deltaX, this.y - deltaY) 
+        }else{
+            this.nextControlPoint.updatePoint(x, y) 
+            const deltaX = x - this.x
+            const deltaY = y - this.y
+            this.perControlPoint.updatePoint(this.x - deltaX, this.y - deltaY)
+        }
+
     }
 
     // 非中心对称  只能更新被点击的控制点

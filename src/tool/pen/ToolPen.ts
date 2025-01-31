@@ -24,14 +24,14 @@ export class ToolPen implements BezierPath {
     render(): void {
         if (!this.points.length) return
         this.ctx.beginPath()
-        this.drawStartEnd()
+        this.drawPoint()
         this.drawHelp()
         this.drawPath()
         this.drawActivePath()
     }
 
-    // 绘制起点和终点
-    private drawStartEnd(): void {
+    // 绘制落点
+    private drawPoint(): void {
         this.ctx.save()
         for (let point of this.points) {
             this.ctx.fillStyle = ToolPenConst.START_POINT_COLOR
@@ -40,16 +40,7 @@ export class ToolPen implements BezierPath {
                 ToolPenConst.START_POINT_SIZE,
                 ToolPenConst.START_POINT_SIZE)
         }
-
-
         this.ctx.restore()
-
-
-    }
-
-    // 绘制控制点
-    private drawControlPoint(): void {
-
     }
 
     // 绘制当前激活的路径
@@ -106,39 +97,73 @@ export class ToolPen implements BezierPath {
 
 
     onPointerdown(event: PointerEvent): void {
-        if (this.mode === ModeType.EDIT) {
-            this.searchEditPoint(event)
-            return
+        // 区分当前的模式 调用不同的处理器
+        if(this.mode === ModeType.EDIT){
+            this.editDown(event)
+        }else{
+            this.drawingDown(event)
+
         }
+
+    }
+    onPointermove(event: PointerEvent): void {
+        // 绘制当前最后一个点的辅助线
+        if(this.mode === ModeType.EDIT){
+            // this.editDown(event)
+            this.editMove(event)
+        }else{
+            // this.drawingDown(event)
+            this.drawingMove(event)
+        }
+    }
+    onPointerup(event: PointerEvent): void {
+        if(this.mode === ModeType.EDIT){
+            this.editUp(event)
+        }else{
+            this.drawingUp(event)
+        }
+    }
+
+    private drawingDown(event: PointerEvent) {
         if (this.mode === ModeType.NONE) {
             this.changeMode(ModeType.DRAW)
         }
         const point = new Point(event);
         this.points.push(point)
-        this.drawStartEnd()
         this.isDrawHeple = true
         this.penHelper.updateHelper(point)
         this.activePoint = null
-
-
     }
-    onPointermove(event: PointerEvent): void {
-        // 绘制当前最后一个点的辅助线
-        if (this.mode !== ModeType.DRAW) return
+
+    private editDown(event: PointerEvent) {
+            this.searchEditPoint(event)
+    }
+
+    private drawingMove(event: PointerEvent) {
         if (this.isDrawHeple) {
+            // 绘制辅助线情况
             const lastPoint = this.points[this.points.length - 1]
             lastPoint.updateControlPoint(event)
             this.penHelper.updateHelper(lastPoint)
         } else {
+            // 绘制自由贝塞尔
             const point = new Point(event);
             this.activePoint = point
         }
-
     }
-    onPointerup(event: PointerEvent): void {
-        if(this.mode !==ModeType.EDIT){
-            this.isDrawHeple = false
-        }
+
+    private editMove(event: PointerEvent) {
+        // 编辑节点
+        this.penHelper.onPointermove(event)
+    }
+
+    private drawingUp(event: PointerEvent) {
+        this.isDrawHeple = false
+    }
+
+    private editUp(event: PointerEvent) {
+        this.penHelper.onPointerup(event)
+        
     }
 
     private changeMode(mode: ModeType) {
