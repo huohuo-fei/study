@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            background-color: skyblue;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas></canvas>
+
+</body>
+<script type="module">
+    import {Point} from './lib/point.js'
+    const canvas = document.querySelector('canvas');
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+    const ctx = canvas.getContext('2d');
+
+    canvas.addEventListener('pointerdown', (e) => {
+        console.log('down');
+        
+    })
+    canvas.addEventListener('pointermove', (e) => {
+        
+    })
+    canvas.addEventListener('pointerup', (e) => {
+        
+    })
+
+    /** 内容区域 */
+    // 二阶贝塞尔曲线,需要三个点，起点:当前路径的最后一个点；一个控制点;一个终点
+    ctx.beginPath();
+    ctx.moveTo(100, 100);
+    ctx.quadraticCurveTo(200, 200, 300, 100);
+    ctx.stroke();
+
+    // 三阶贝塞尔曲线，需要四个点，有两个控制点
+    ctx.beginPath();
+    ctx.moveTo(100, 300);
+    ctx.bezierCurveTo(200, 400, 300, 200, 400, 300);
+    ctx.stroke()
+</script>
+
+</html>

@@ -39,14 +39,38 @@
     path2D.moveTo(300,300)
     path2D.lineTo(400,400)
     path2D.lineTo(500,300)
-
+    path2D.closePath()
+    ctx.strokeStyle = 'red'
+    ctx.stroke(path2D)
     const p2 = new Path2D()
     p2.moveTo(500,500)
     p2.lineTo(600,600)
     p2.lineTo(700,500)
-    p2.addPath(path2D)
-
+    p2.closePath()
+    ctx.strokeStyle = 'blue'   // 使用path2D对象后，不需要再使用beginPath()方法
     ctx.stroke(p2)
+
+    // ctx.stroke(p2)
+    
+    // 绘制两个三角形 
+    // ctx.strokeStyle = 'red'
+    // ctx.beginPath()
+    // ctx.moveTo(100, 100)
+    // ctx.lineTo(200, 100)
+    // ctx.lineTo(200, 200)
+    // ctx.closePath()
+    // ctx.stroke()
+
+    // // ctx.beginPath()  如果在绘制另一个三角形不重置当前路径，那么会将之前的三角形覆盖掉
+    // ctx.moveTo(200, 200)
+    // ctx.lineTo(300, 200)
+    // ctx.lineTo(300, 300)
+    // ctx.closePath()
+    // ctx.strokeStyle = 'blue'
+    // ctx.stroke()
+
+
+
 
 
 
