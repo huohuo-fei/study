@@ -2,6 +2,7 @@
 import { Point } from "../point";
 import { ToolPenConst } from "../utils";
 import { IPenHelper } from "./type";
+import { CustomEvent } from "../mode";
 
 export class PenHelper implements IPenHelper {
     link: boolean;
@@ -64,17 +65,13 @@ export class PenHelper implements IPenHelper {
         this.selectControlType = "center"
     }
 
-    onPointermove(event: PointerEvent) {
+    onPointermove(event: CustomEvent) {
         if(this.selectControlType === "per" || this.selectControlType === "next"){
             this.originPoint?.updateControlPointByDir(event,this.selectControlType)
             this.updateHelper(this.originPoint as Point)
         }
     }
-    onPointerup(event: PointerEvent) {
+    onPointerup(event: CustomEvent) {
         this.selectControlType = "center"
     }
-
-
-
-
 }

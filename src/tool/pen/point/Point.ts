@@ -1,33 +1,43 @@
 import { BezierPoint } from './type'
 import { ControlPoint } from '../controlPoint';
+import { CustomEvent } from '../mode';
 export class Point implements BezierPoint {
     x: number;
     y: number;
     link: boolean;
     perControlPoint: ControlPoint;
     nextControlPoint: ControlPoint;
-    constructor(e: PointerEvent) {
-        this.x = e.clientX;
-        this.y = e.clientY
+    constructor(e: CustomEvent) {
+        this.x = e.x;
+        this.y = e.y
         this.link = true
         this.perControlPoint = new ControlPoint(this.x, this.y)
         this.nextControlPoint = new ControlPoint(this.x, this.y)
     }
 
+    restorePoint(p:Point){
+        this.x = p.x
+        this.y = p.y
+        this.perControlPoint.updatePoint(p.perControlPoint.x,p.perControlPoint.y)
+        this.nextControlPoint.updatePoint(p.nextControlPoint.x,p.nextControlPoint.y)
+        this.link = p.link
+
+    }
+
     // 更新当前点的控制点
-    updateControlPoint(e: PointerEvent) {
-        const { clientX, clientY } = e
+    updateControlPoint(e: CustomEvent) {
+        const { x, y } = e
         if (this.link) {
-            this.symmetric(clientX, clientY)
+            this.symmetric(x, y)
         } else {
 
         }
 
     }
-    updateControlPointByDir(e: PointerEvent,dir:'per'|'next') {
-        const { clientX, clientY } = e
+    updateControlPointByDir(e:CustomEvent ,dir:'per'|'next') {
+        const { x, y } = e
         if (this.link) {
-            this.symmetric(clientX, clientY,dir)
+            this.symmetric(x, y,dir)
         } else {
 
         }

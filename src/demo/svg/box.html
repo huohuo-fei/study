@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+
+</body>
+
+<!-- <script>
+    var rectBBox = document.querySelector("#test-path");
+    var bboxGroup = rectBBox.getBBox();
+    console.log(bboxGroup, 'bboxGroup');
+
+    const dom = document.querySelector('#rect_2');
+    dom.setAttribute('x', bboxGroup.x);
+    dom.setAttribute('y', bboxGroup.y);
+    dom.setAttribute('width', bboxGroup.width);
+    dom.setAttribute('height', bboxGroup.height);
+
+
+</script> -->
+
+<script>
+    // 创建一个 Canvas 元素
+var canvas = document.createElement('canvas');
+var ctx = canvas.getContext('2d');
+
+// 绘制一个路径
+ctx.beginPath();
+ctx.moveTo(50, 50);
+ctx.lineTo(100, 100);
+ctx.stroke();
+
+// 获取 Canvas 上的像素数据
+var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+// 创建一个 SVG 元素
+var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+
+// 将像素数据转换为 SVG 的 `path`
+var d = '';
+for (var y = 0; y < imageData.height; y++) {
+    for (var x = 0; x < imageData.width; x++) {
+        var index = (y * imageData.width + x) * 4;
+        var r = imageData.data[index];
+        var g = imageData.data[index + 1];
+        var b = imageData.data[index + 2];
+        var a = imageData.data[index + 3];
+
+        if (r > 0 || g > 0 || b > 0 || a > 0) {
+            d += 'M' + x + ',' + y + ' ';
+        }
+    }
+}
+
+path.setAttribute('d', d);
+svg.appendChild(path);
+
+// 将 SVG 添加到文档中
+document.body.appendChild(svg);
+
+</script>
+</html>
