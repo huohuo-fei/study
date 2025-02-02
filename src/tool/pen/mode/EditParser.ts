@@ -5,14 +5,15 @@ import { CustomEvent } from "./type";
 
 export class EditParser extends Parser {
     editPoint: Point | null = null;
-    constructor(ctx: CanvasRenderingContext2D,points: Point[]) {
+    isOperate:boolean = false
+    constructor(ctx: CanvasRenderingContext2D, points: Point[]) {
         super(ctx)
         this.points = points
         this.restore(points)
     }
 
-    restore(points:Point[]){
-      this.points =  points.map((p) => {
+    restore(points: Point[]) {
+        this.points = points.map((p) => {
             const customEvent = {
                 x: p.x,
                 y: p.y
@@ -26,14 +27,26 @@ export class EditParser extends Parser {
     }
 
     onPointerdown(event: CustomEvent): void {
+        this.isOperate = true
         this.searchEditPoint(event)
     }
 
     onPointermove(event: CustomEvent) {
-        this.penHelper.onPointermove(event)
+        if(!this.isOperate)return
+        if (this.editPoint && !this.isDrawHeple) {
+            // 当前移动的是节点
+            this.editPoint.updatePointPos(event)
+        } else {
+            // 如果辅助线存在  说明移动的是控制点
+            this.penHelper.onPointermove(event)
+        }
     }
     onPointerup(event: CustomEvent) {
-        this.penHelper.onPointerup(event)
+        if (this.editPoint) {
+            this.isDrawHeple = true
+            this.penHelper.updateHelper(this.editPoint)
+        }
+        this.isOperate = false
     }
 
     render(ctx: CanvasRenderingContext2D) {
@@ -45,13 +58,24 @@ export class EditParser extends Parser {
     private searchEditPoint(event: CustomEvent) {
         const point = this.searchPointByXY(event.x, event.y)
         if (point) {
+            // 命中的是节点
             this.editPoint = point
-            this.isDrawHeple = true
-            this.penHelper.updateHelper(point)
-        } else if (this.isDrawHeple) {
-            // 寻找是否点击了编辑点
-            this.penHelper.searchPoint(event.x, event.y,this.ctx)
+            this.isDrawHeple = false
+            return
         }
+        if (this.editPoint) {
+            // 没有命中节点，但有编辑点存在的情况  需要判断是否命中控制点
+            const dir = this.penHelper.searchPoint(event.x, event.y, this.ctx)
+            if (dir !== 'center') {
+                // 命中控制点
+                this.isDrawHeple = true
+                return
+            }
+        }
+
+        // 什么都没命中 隐藏
+        this.isDrawHeple = false
+        this.editPoint = null
     }
     private searchPointByXY(x: number, y: number): Point | undefined {
         for (let point of this.points) {

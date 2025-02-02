@@ -44,6 +44,16 @@ export class Point implements BezierPoint {
 
     }
 
+    updatePointPos(e:CustomEvent){
+        const { x, y } = e
+        const deltaX = x - this.x
+        const deltaY = y - this.y
+        this.x += deltaX
+        this.y += deltaY
+        this.perControlPoint.updatePoint(this.perControlPoint.x + deltaX, this.perControlPoint.y + deltaY)
+        this.nextControlPoint.updatePoint(this.nextControlPoint.x + deltaX, this.nextControlPoint.y + deltaY)
+    }
+
     // 中心对称   -----暂时只考虑 绘制中  不考虑修改的情况
     private symmetric(x: number, y: number,dir='per') {
         if(dir === 'next'){

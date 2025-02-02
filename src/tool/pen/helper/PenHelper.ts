@@ -46,23 +46,24 @@ export class PenHelper implements IPenHelper {
         ctx.restore()
     }
 
-    searchPoint(x: number, y: number, ctx: CanvasRenderingContext2D) {
+    searchPoint(x: number, y: number, ctx: CanvasRenderingContext2D): "per" | "next" | "center" {
         ctx.save()
         ctx.beginPath()
         ctx.arc(this.perPoint.x, this.perPoint.y, ToolPenConst.HELPER_RADIUS, 0, Math.PI * 2);
         const isPer = ctx.isPointInPath(x, y)
         if (isPer) {
             this.selectControlType = "next"
-            return
+            return "next"
         }
         ctx.beginPath()
         ctx.arc(this.nextPoint.x, this.nextPoint.y, ToolPenConst.HELPER_RADIUS, 0, Math.PI * 2);
         const isNext = ctx.isPointInPath(x, y)
         if (isNext) {
             this.selectControlType = "per"
-            return
+            return  "per"
         }
         this.selectControlType = "center"
+        return "center"
     }
 
     onPointermove(event: CustomEvent) {
