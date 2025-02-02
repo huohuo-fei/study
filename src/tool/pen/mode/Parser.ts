@@ -78,7 +78,7 @@ export class Parser implements IParser{
     }
 
     // 绘制已经确定的笔迹
-    private drawPath(ctx:CanvasRenderingContext2D): void {
+    drawPath(ctx:CanvasRenderingContext2D): void {
         if (this.points.length > 1) {
         ctx.save()
             ctx.beginPath()

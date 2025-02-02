@@ -12,15 +12,24 @@ const props = defineProps({
 });
 const router = useRouter()
 const canvasRef = ref<HTMLCanvasElement>();
+const svgRef = ref<SVGSVGElement>()
 let bezierPath: ToolPen | null
+let imgBitMap: ImageBitmap | null = null
 
 
-onMounted(() => {
+onMounted(async () => {
     // 绘制
-
+    const blob = await loadImg()
+    imgBitMap = blob
     initListen()
     render()
 });
+
+const loadImg = async () => {
+    const res = await  fetch('/resource/test-bg.jpeg')
+    const blob = await res.blob()
+    return createImageBitmap(blob)
+}
 
 const initListen = () => {
     // 监听
@@ -49,13 +58,16 @@ const initListen = () => {
     })
 
 }
-
+let myReq = 0
 const render = () => {
     const canvas = canvasRef.value;
     const ctx = canvas?.getContext('2d');
     ctx?.clearRect(0, 0, canvas?.width as number, canvas?.height as number)
+    if(imgBitMap){
+        ctx?.drawImage(imgBitMap,0,0)
+    }
     bezierPath?.render()
-    requestAnimationFrame(render)
+    myReq = requestAnimationFrame(render)
 }
 
 
@@ -66,10 +78,31 @@ const startPen = () => {
     bezierPath = new ToolPen(ctx)
 }
 
-const clear = () => {
-    const canvas = canvasRef.value;
-    const ctx = canvas?.getContext('2d');
-    ctx?.clearRect(0, 0, canvas?.width as number, canvas?.height as number)
+const download = () => {
+    if (!bezierPath) return
+    const points = bezierPath.exportPenPoints()
+    let str = ''
+    const firstPoint = points[0]
+    str += `M ${firstPoint.x} ${firstPoint.y} `
+
+    for (let i = 1, len = points.length; i < len; i++) {
+        const perPoint = points[i - 1]
+        const point = points[i]
+        str += `C ${perPoint.nextControlPoint.x} ${perPoint.nextControlPoint.y} ${point.perControlPoint.x} ${point.perControlPoint.y} ${point.x} ${point.y} `
+    }
+    if (svgRef.value) {
+        const pathBox = svgRef.value.querySelector('path') as SVGPathElement
+        pathBox.setAttribute('d', str)
+        const pathGroup = pathBox.getBBox();
+        bezierPath.clipCanvas(pathGroup,imgBitMap as ImageBitmap).then(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'image.png';
+            a.click();
+            URL.revokeObjectURL(url);
+        })
+    }
 }
 </script>
 
@@ -79,13 +112,26 @@ const clear = () => {
         <button @click="startPen">
             钢笔
         </button>
-        <button @click="clear">clear</button>
+        <button @click="download">download</button>
+    </div>
+    <div class="svg-box">
+        <svg ref="svgRef" :width="size.width" :height="size.height" xmlns="http://www.w3.org/2000/svg">
+            <path stroke="transparent" fill="transparent" />
+        </svg>
     </div>
 </template>
 
 <style scoped>
 .read-the-docs {
     color: #888;
+}
+
+.svg-box {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -10;
+
 }
 
 .operate {
