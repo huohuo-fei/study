@@ -8,3 +8,10 @@ export type ClipRect = {
     width:number,
     height:number
 }
+
+export type BitMapInfo = {
+    bitmap: ImageBitmap | null,
+    offsetX: number,
+    offsetY: number,
+    scale: number
+}

@@ -1,4 +1,4 @@
-import { BezierPath, ClipRect } from './type'
+import { BezierPath, BitMapInfo, ClipRect } from './type'
 import { Parser, CustomEvent, DrawParser, EditParser } from "./mode";
 
 
@@ -53,13 +53,16 @@ export class ToolPen implements BezierPath {
         return customEvent
     }
 
-    clipCanvas(rect: ClipRect, bitImg: ImageBitmap): Promise<Blob> {
+    clipCanvas(rect: ClipRect,bitmapInfo:BitMapInfo): Promise<Blob> {
         return new Promise((resolve, reject) => {
             this.ctx.save()
             this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height)
             this.toolParser.drawPath(this.ctx)
             this.ctx.clip()
-            this.ctx.drawImage(bitImg, 0, 0)
+            if (bitmapInfo.bitmap) {
+                const { bitmap, offsetX, offsetY, scale } = bitmapInfo
+                this.ctx?.drawImage(bitmap, 0, 0, bitmap.width, bitmap.height, offsetX, offsetY, bitmap.width * scale, bitmap.height * scale)
+            }
             const canvas = document.createElement('canvas')
             canvas.width = rect.width
             canvas.height = rect.height
