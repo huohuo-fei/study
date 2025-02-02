@@ -44,7 +44,13 @@ export class Parser implements IParser{
     private drawPoint(ctx: CanvasRenderingContext2D) {
         ctx.save()
         for (let point of this.points) {
-            ctx.fillStyle = ToolPenConst.START_POINT_COLOR
+            if(point.link){
+                ctx.fillStyle = ToolPenConst.START_POINT_COLOR
+            }else{
+                 // #8b1e1e
+                ctx.fillStyle = ToolPenConst.START_POINT_UNLINK_COLOR
+
+            }
             ctx.fillRect(point.x - ToolPenConst.START_POINT_SIZE / 2,
                 point.y - ToolPenConst.START_POINT_SIZE / 2,
                 ToolPenConst.START_POINT_SIZE,

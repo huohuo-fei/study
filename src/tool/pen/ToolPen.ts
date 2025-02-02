@@ -26,6 +26,9 @@ export class ToolPen implements BezierPath {
 
     onPointerdown(event: PointerEvent): void {
         const customevent = this.createEvent(event)
+        if (event.ctrlKey) {
+            customevent.ctrlKey = true
+        }
         this.toolParser.onPointerdown(customevent)
     }
     onPointermove(event: PointerEvent): void {
@@ -50,8 +53,8 @@ export class ToolPen implements BezierPath {
         return customEvent
     }
 
-    clipCanvas(rect: ClipRect, bitImg: ImageBitmap):Promise<Blob> {
-        return new Promise((resolve, reject) =>{
+    clipCanvas(rect: ClipRect, bitImg: ImageBitmap): Promise<Blob> {
+        return new Promise((resolve, reject) => {
             this.ctx.save()
             this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height)
             this.toolParser.drawPath(this.ctx)
@@ -71,6 +74,15 @@ export class ToolPen implements BezierPath {
     }
     exportPenPoints() {
         return this.toolParser.exportPoints()
+    }
+
+    dispose() {
+        this.toolParser.dispose()
+        for (const key in this) {
+            if (this.hasOwnProperty(key)) {
+                delete this[key]
+            }
+        }
     }
 
 }

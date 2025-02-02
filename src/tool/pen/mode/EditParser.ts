@@ -58,6 +58,9 @@ export class EditParser extends Parser {
     private searchEditPoint(event: CustomEvent) {
         const point = this.searchPointByXY(event.x, event.y)
         if (point) {
+            if(event.ctrlKey){
+                point.link = false
+            }
             // 命中的是节点
             this.editPoint = point
             this.isDrawHeple = false

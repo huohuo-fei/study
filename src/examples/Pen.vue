@@ -38,6 +38,7 @@ const initListen = () => {
         if (e.button === 0) {
             // 左键
             bezierPath?.onPointerdown(e)
+            
         } else if (e.button === 2) {
             bezierPath?.onDrawOver()
         }
@@ -72,7 +73,9 @@ const render = () => {
 
 
 const startPen = () => {
-    if (bezierPath) return
+    if (bezierPath) {
+        bezierPath.dispose()
+    }
     const canvas = canvasRef.value;
     const ctx = canvas?.getContext('2d') as CanvasRenderingContext2D
     bezierPath = new ToolPen(ctx)
@@ -81,6 +84,7 @@ const startPen = () => {
 const download = () => {
     if (!bezierPath) return
     const points = bezierPath.exportPenPoints()
+    if(!points.length)return
     let str = ''
     const firstPoint = points[0]
     str += `M ${firstPoint.x} ${firstPoint.y} `
@@ -110,7 +114,7 @@ const download = () => {
     <canvas ref="canvasRef" :width="size.width" :height="size.height"></canvas>
     <div class="operate">
         <button @click="startPen">
-            钢笔
+            start
         </button>
         <button @click="download">download</button>
     </div>

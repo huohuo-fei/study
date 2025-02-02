@@ -20,4 +20,5 @@ export type CustomEvent = {
     x: number;
     y: number;
     rawEvent?: PointerEvent
+    ctrlKey?: boolean
 }

@@ -36,6 +36,12 @@ export class PenHelper implements IPenHelper {
             ctx.moveTo(this.perPoint.x, this.perPoint.y);
             ctx.lineTo(this.nextPoint.x, this.nextPoint.y);
             ctx.stroke();
+        }else{
+            ctx.moveTo(this.perPoint.x, this.perPoint.y);
+            ctx.lineTo(this.centerPoint.x, this.centerPoint.y);
+            ctx.moveTo(this.centerPoint.x, this.centerPoint.y)
+            ctx.lineTo(this.nextPoint.x, this.nextPoint.y);
+            ctx.stroke();
         }
 
         ctx.moveTo(this.perPoint.x, this.perPoint.y);
