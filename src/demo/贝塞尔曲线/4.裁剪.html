@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            background-color: skyblue;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas></canvas>
+
+</body>
+<script type="module">
+    const canvas = document.querySelector('canvas');
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+    const ctx = canvas.getContext('2d');
+
+    ctx.beginPath()
+    ctx.save()
+    ctx.moveTo(0,200)
+    ctx.lineTo(200,0)
+    ctx.lineTo(400,200)
+    ctx.closePath()
+    ctx.stroke()
+    ctx.fillStyle = 'yellow'
+    ctx.fill()
+    ctx.restore()
+
+    ctx.save()
+    ctx.fillStyle = 'red'
+    ctx.beginPath()
+    ctx.moveTo(0,200)
+    ctx.lineTo(400,200)
+    ctx.lineTo(400,400)
+    ctx.lineTo(0,400)
+    ctx.lineTo(0,200)
+    ctx.moveTo(50,275)
+    ctx.lineTo(50,325)
+    ctx.lineTo(100,325)
+    ctx.lineTo(100,275)
+    ctx.lineTo(50,275)
+
+    ctx.moveTo(300,275)
+    ctx.lineTo(300,325)
+    ctx.lineTo(350,325)
+    ctx.lineTo(350,275)
+    ctx.lineTo(300,275)
+
+    ctx.moveTo(175,300)
+    ctx.lineTo(175,400)
+    ctx.lineTo(225,400)
+    ctx.lineTo(225,300)
+    ctx.lineTo(175,300)
+    // ctx.stroke()
+    // ctx.fill()
+    ctx.clip()
+
+    ctx.beginPath()
+    ctx.fillStyle = 'blue'
+    ctx.rect(0,0,500,500)
+    ctx.fill()
+    ctx.restore()
+
+    ctx.save()
+    ctx.beginPath()
+    ctx.fillStyle = 'green'
+    ctx.translate(100,100)
+    ctx.rect(0,0,200,200)
+    ctx.lineWidth = 5
+    ctx.stroke()
+    ctx.restore()
+    ctx.save()
+    ctx.clip()  // 此时的裁剪区域 依然是上一个路径，但上一个路径存在变换信息，所以裁剪区域也会应用相同的变换
+    ctx.rect(0,0,500,500)
+    ctx.fill()
+    ctx.restore()
+
+    
+
+</script>
+
+</html>
