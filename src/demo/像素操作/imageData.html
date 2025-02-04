@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            background-color: skyblue;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas></canvas>
+
+</body>
+<script type="module">
+    const canvas = document.querySelector('canvas');
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+    const ctx = canvas.getContext('2d');
+    const data = ctx.getImageData(0, 0, 1, 1);
+    console.log(data);
+    const newData = ctx.createImageData(1, 1);
+    newData[0] = 255
+    newData[1] = 0
+    newData[2] = 0
+    newData[3] = 255
+    ctx.putImageData(newData, 0, 0);
+
+    const cacheCanvas = document.createElement('canvas');
+    cacheCanvas.width = 1;
+    cacheCanvas.height = 1;
+    const cacheCtx = cacheCanvas.getContext('2d');
+    cacheCtx.fillStyle = 'red';
+    cacheCtx.fillRect(0, 0, 1, 1);
+    const cacheData = cacheCtx.getImageData(0, 0, 1, 1);
+    console.log(cacheData);
+    
+
+    
+</script>
+
+</html>

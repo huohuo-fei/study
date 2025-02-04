@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+        }
+
+        canvas {
+            width: 50%;
+            height: 100%;
+            background-color: skyblue;
+        }
+
+        .right-canvas {
+            background-color: yellow;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas class="left-canvas"></canvas>
+    <canvas class="right-canvas"></canvas>
+
+</body>
+<script type="module">
+
+    const lCanvas = document.querySelector('.left-canvas')
+    const rCanvas = document.querySelector('.right-canvas')
+    const lCtx = lCanvas.getContext('2d')
+    const rCtx = rCanvas.getContext('2d')
+    render()
+
+    async function render() {
+        const bitMap = await loadImg()
+        lCtx.drawImage(bitMap, 0, 0, lCanvas.width, lCanvas.height)
+        calcColor()
+    }
+
+    function calcColor() {
+        // invertColor()
+        // grayColor()
+        // gray()
+        // blur()
+        emboss()
+    }
+
+    // 反色
+    function invertColor() {
+        const imageData = lCtx.getImageData(0, 0, lCanvas.width, lCanvas.height)
+        const data = imageData.data
+
+        for (let i = 0; i < imageData.height; i++) {
+            for (let j = 0; j < imageData.width; j++) {
+                const index = (i * imageData.width + j) * 4
+                const r = data[index]
+                const g = data[index + 1]
+                const b = data[index + 2]
+                data[index] = 255 - r
+                data[index + 1] = 255 - g
+                data[index + 2] = 255 - b
+            }
+        }
+        rCtx.putImageData(imageData, 0, 0)
+    }
+
+    // 图像二值化
+    function grayColor() {
+        const threshold = 126   //灰度参考值
+        const imageData = lCtx.getImageData(0, 0, lCanvas.width, lCanvas.height)
+        const data = imageData.data
+        for (let i = 0; i < imageData.height; i++) {
+            for (let j = 0; j < imageData.width; j++) {
+                const index = (i * imageData.width + j) * 4
+                const r = data[index]
+                const g = data[index + 1]
+                const b = data[index + 2]
+                const grayValue = (r + g + b) / 3
+                if (grayValue > threshold) {
+                    data[index] = 255
+                    data[index + 1] = 255
+                    data[index + 2] = 255
+                } else {
+                    data[index] = 0
+                    data[index + 1] = 0
+                    data[index + 2] = 0
+                }
+
+            }
+        }
+        rCtx.putImageData(imageData, 0, 0)
+
+    }
+
+
+    // 图像灰度
+    function gray() {
+        const imageData = lCtx.getImageData(0, 0, lCanvas.width, lCanvas.height)
+        const data = imageData.data
+        for (let i = 0; i < imageData.height; i++) {
+            for (let j = 0; j < imageData.width; j++) {
+                const index = (i * imageData.width + j) * 4
+                const r = data[index]
+                const g = data[index + 1]
+                const b = data[index + 2]
+                // const value=r*0.3+g*0.59+b*0.11;// 人眼感觉的加权平均数
+                const value = r;// 人眼感觉的加权平均数
+                data[index] = value
+                data[index + 1] = value
+                data[index + 2] = value
+            }
+        }
+        rCtx.putImageData(imageData, 0, 0)
+    }
+
+    // 图像模糊 获取当前点周围点的像素的平均值
+    function blur() {
+        const imageData = lCtx.getImageData(0, 0, lCanvas.width, lCanvas.height)
+        const templateData = lCtx.getImageData(0, 0, lCanvas.width, lCanvas.height)
+        const data = imageData.data
+
+        const blurR = 2 // 两个像素点的长度
+        const blurNum = (2 * blurR + 1) ** 2 // 模糊的像素点个数
+        for (let i = blurR; i < imageData.height - blurR; i++) {
+            for (let j = blurR; j < imageData.width - blurR; j++) {
+                const ind = (i * imageData.width + j) * 4
+
+                let totalR = 0
+                let totalG = 0
+                let totalB = 0
+                // 遍历模糊半径里的像素
+                for (let m = -blurR; m <= blurR; m++) {  // 行
+                    for (let n = -blurR; n <= blurR; n++) { // 列
+                        const index = ((i + m) * imageData.width + j + n) * 4
+                        totalR += data[index]
+                        totalG += data[index + 1]
+                        totalB += data[index + 2]
+                    }
+                }
+                templateData.data[ind] = totalR / blurNum
+                templateData.data[ind + 1] = totalG / blurNum
+                templateData.data[ind + 2] = totalB / blurNum
+            }
+
+        }
+        rCtx.putImageData(templateData, 0, 0)
+    }
+
+    // 浮雕效果
+    function emboss() {
+        const imageData = lCtx.getImageData(0, 0, lCanvas.width, lCanvas.height)
+        const templateData = lCtx.getImageData(0, 0, lCanvas.width, lCanvas.height)
+        const data = imageData.data
+        const constValue = 126
+        for (let i = 1; i < imageData.height - 1; i++) {
+            for (let j = 1; j < imageData.width - 1; j++) {
+                const ind = (i * imageData.width + j) * 4
+                const beforeInd = (i * imageData.width + j - 1) * 4
+                const nextInd = (i * imageData.width + j + 1) * 4
+
+                let nr = data[nextInd] - data[beforeInd] + constValue
+                let ng = data[nextInd + 1] - data[beforeInd + 1] + constValue
+                let nb = data[nextInd + 2] - data[beforeInd + 2] + constValue
+
+                nr = nr < 0 ? 0 : (nr > 255 ? 255 : nr)
+                ng = ng < 0 ? 0 : (ng > 255 ? 255 : ng)
+                nb = nb < 0 ? 0 : (nb > 255 ? 255 : nb)
+
+                templateData.data[ind] = nr
+                templateData.data[ind + 1] = ng
+                templateData.data[ind + 2] = nb
+            }
+            rCtx.putImageData(templateData, 0, 0)
+
+        }
+
+    }
+    async function loadImg() {
+        const res = await fetch('./img/test-bg.jpeg')
+        const blob = await res.blob()
+        const bit = await createImageBitmap(blob)
+        return bit
+    }
+
+
+
+
+</script>
+
+</html>
