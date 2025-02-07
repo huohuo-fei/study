@@ -12,8 +12,9 @@
       "lib": ["ESNext", "DOM"],
       "skipLibCheck": true,
       "noEmit": true,
-      // "suppressImplicitAnyIndexErrors": true,
-      "ignoreDeprecations": "5.0"
+      "ignoreDeprecations": "5.0",
+      "suppressImplicitAnyIndexErrors": true,
+      // "noImplicitAny": false,
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],
   "exclude": ["node_modules"]
