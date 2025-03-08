@@ -36,6 +36,7 @@ const copy = (text: string) => {
           <button @click="router.push('test-three')">3D画布</button>
           <button @click="router.push('test-path')">2D画布</button>
           <button @click="router.push('test-pen')">钢笔抠图</button> 
+          <button @click="router.push('test-tree')">树形列表</button> 
         </aside>
       </section>
     </main>

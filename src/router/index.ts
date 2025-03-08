@@ -18,6 +18,10 @@ const routes = [
     component:() => import('../examples/Three.vue')
   },
   {
+    path:'/test-tree',
+    component:() => import("../examples/tree/Tree.vue")
+  },
+  {
     path:'/blog-canvas-01',
     component:() => import('../blog/Canvas_01.vue')
   },
