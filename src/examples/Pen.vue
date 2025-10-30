@@ -3,15 +3,14 @@ import { ref, defineProps, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { Receiver } from '../tool/Receiver';
 import { BitMapInfo, ToolPen } from '../tool/pen';
-
-
-
 const props = defineProps({
     size: {
         type: Object,
         default: { width: 0, height: 0 },
     },
 });
+const router = useRouter()
+
 const canvasRef = ref<HTMLCanvasElement>();
 const svgRef = ref<SVGSVGElement>()
 let bezierPath: ToolPen | null
@@ -32,8 +31,7 @@ onMounted(async () => {
 });
 
 const loadImg = async () => {
-    // const res = await fetch('/resource/bg2.jpg')
-    const res = await fetch('/resource/test-bg.jpeg')
+    const res = await fetch('https://huohuo-fei.github.io/study/resource/test-bg.jpeg')
     const blob = await res.blob()
     return createImageBitmap(blob)
 }
@@ -115,7 +113,7 @@ const download = () => {
     }
 }
 
-const createInfo =(bitmap: ImageBitmap) => {
+const createInfo = (bitmap: ImageBitmap) => {
     const { width, height } = bitmap
     const ratioWH = width / height
     let scale = 1
@@ -136,7 +134,7 @@ const createInfo =(bitmap: ImageBitmap) => {
 }
 
 const uploadFile = (e: Event) => {
-    if(bezierPath){
+    if (bezierPath) {
         bezierPath.dispose()
         bezierPath = null
     }
@@ -169,6 +167,7 @@ const uploadFile = (e: Event) => {
     <div class="operate">
         <button @click="startPen">start</button>
         <button @click="download">download</button>
+        <button @click="router.replace('/')">Home</button>
         <input type="file" accept="image/png, image/jpeg" @input="uploadFile">
     </div>
     <div class="svg-box">
