@@ -117,26 +117,15 @@ const currentModel = ref<optModel>(optModel.draw);
 </script>
 
 <template>
-  <canvas
-    :style="{ cursor: cursor }"
-    ref="canvasRef"
-    :width="size.width"
-    :height="size.height"
-  ></canvas>
+  <canvas :style="{ cursor: cursor }" ref="canvasRef" :width="size.width" :height="size.height"></canvas>
   <div class="operate">
-    <button
-      :class="currentModel === optModel.draw ? 'active' : ''"
-      @click="currentModel = optModel.draw"
-    >
+    <button :class="currentModel === optModel.draw ? 'active' : ''" @click="currentModel = optModel.draw">
       draw
     </button>
-    <button
-      :class="currentModel === optModel.select ? 'active' : ''"
-      @click="currentModel = optModel.select"
-    >
+    <button :class="currentModel === optModel.select ? 'active' : ''" @click="currentModel = optModel.select">
       select
     </button>
-    <button @click="router.replace('/')" >
+    <button @click="router.replace('/')">
       Home
     </button>
   </div>
