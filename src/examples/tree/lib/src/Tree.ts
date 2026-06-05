@@ -170,20 +170,40 @@ export class TreeList {
   }
 
   highLine(x: number, y: number) {
-    // console.log(x, y);
-    this.updateCanvas();
+    // console.log(x,y,this.levelArray[0][0]);
+    
+    // 将DOM坐标转为 画布坐标 
+    const canvasX = x - 100
+    const canvasY = y - 400
+    // 遍历所有节点，找到点击的节点   -- 可以考虑 先确定点击的层级，再确定点击的节点
+    for (let i = 0; i < this.levelArray.length; i++) {
+      const nodeArr = this.levelArray[i]
+
+      for(let j = 0,len = nodeArr.length; j < len; j++){
+        const node = nodeArr[j]
+        const ltp = {
+          x:node.offsetX,
+          y:-node.offsetY
+        }
+        const rbp = {
+          x:node.offsetX + node.config.width,
+          y:-node.offsetY + node.config.height
+        }
+
+        if(canvasX >= ltp.x && canvasX <= rbp.x && canvasY >= ltp.y && canvasY <= rbp.y){
+          console.log(node.originData);
+          break
+        }
+  
+      }
+    }
+    
+    
+    // this.updateCanvas();
   }
 
+  // 依据当前坐标 更新点击的节点样式
   updateCanvas() {
-    const canvas = document.createElement('canvas');
-    canvas.width = this.cacheCanvas.width;
-    canvas.height = this.cacheCanvas.height;
-    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
-    // const { e, f } = this.ctx.getTransform();
-    // ctx.translate(e, f);
-    ctx.strokeStyle = 'green'
-    const node = this.listMaxLevelNode
-    node.renderLine(ctx)
-    this.ctx.drawImage(canvas, 0, 0);
+
   }
 }

@@ -38,7 +38,7 @@ export class TreeNode {
   state: NodeState = NodeState.none;
   // 节点的显示状态
   optState:NodeOptState = NodeOptState.none
-  // 节点的中心坐标，已节点的左上角为参考
+  // 节点的中心坐标，以节点的左上角为参考
   x: number = 0;
   y: number = 0;
   // 节点相对于画布原点的偏移量
@@ -54,7 +54,7 @@ export class TreeNode {
     this.x = this.config.width / 2;
     this.y = this.config.height / 2;
     this.offsetX = 0;
-    this.offsetY = 1;
+    this.offsetY = 0;
     this.depth = 0;
   }
 

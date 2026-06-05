@@ -9,8 +9,6 @@ onMounted(() => {
     data: testData,
   });
   tree.start()
-  console.log(tree);
-  
 });
 </script>
 
